@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расширенная статистика файлов</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+
+    <!-- Общая статистика -->
+    <div class="card shadow-sm mb-4" data-aos="fade-down">
+        <div class="card-body text-center">
+            <h2>📌 Общая статистика файлов</h2>
+            <p>Всего файлов: <strong>{{ stats.total_files }}</strong></p>
+            <p>Среднее в день: <strong>{{ stats.average_per_day }}</strong></p>
+        </div>
+    </div>
+
+    <!-- Последние 7 дней -->
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-body">
+            <h3 class="text-center">📅 Последние 7 дней</h3>
+            <table class="table table-bordered text-center">
+                <thead class="table-primary">
+                <tr>
+                    <th>Дата 📆</th>
+                    <th>Файлов 📁</th>
+                    <th>Пользователей 👥</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for date, files_count, users_count in stats.last_7_days %}
+                    <tr>
+                        <td>{{ date }}</td>
+                        <td>{{ files_count }}</td>
+                        <td>{{ users_count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Топ пользователей за неделю -->
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-body">
+            <h3 class="text-center">🌟 Топ пользователей за неделю</h3>
+            <table class="table table-bordered text-center">
+                <thead class="table-warning">
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Файлов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for user, count in stats.top_users_week %}
+                    <tr>
+                        <td>{{ user }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Топ-5 активных дней -->
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-body">
+            <h3 class="text-center">🔥 Топ-5 активных дней</h3>
+            <ul class="list-group">
+                {% for day, count in stats.top_days %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ day }}</span><span>📁 {{ count }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- График -->
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-body">
+            <h3 class="text-center">📈 Динамика файлов и пользователей за последние 7 дней</h3>
+            <canvas id="weeklyChart"></canvas>
+        </div>
+    </div>
+
+    <div class="text-center py-4">
+        <a href="/export" class="btn btn-success btn-lg">📥 Экспорт в Excel</a>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script>
+AOS.init();
+
+const ctx = document.getElementById('weeklyChart');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [{% for date, _, _ in stats.last_7_days %}'{{date}}',{% endfor %}],
+        datasets: [
+            {
+                label: 'Файлов за день',
+                data: [{% for _, files, _ in stats.last_7_days %}{{files}},{% endfor %}],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.2)',
+                tension: 0.3,
+                fill: true
+            },
+            {
+                label: 'Пользователей за день',
+                data: [{% for _, _, users in stats.last_7_days %}{{users}},{% endfor %}],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239,68,68,0.2)',
+                tension: 0.3,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                ticks: {maxRotation:45,minRotation:45}
+            },
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// автообновление страницы каждые 5 минут
+setTimeout(() => location.reload(), 300000);
+</script>
+</body>
+</html>
+
