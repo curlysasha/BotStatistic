@@ -5,48 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Расширенная статистика файлов</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light">
 <div class="container py-5">
 
     <!-- Общая статистика -->
-    <div class="card shadow-sm mb-4" data-aos="fade-down">
+    <div class="card shadow-sm mb-4">
         <div class="card-body text-center">
             <h2>📌 Общая статистика файлов</h2>
             <p>Всего файлов: <strong>{{ stats.total_files }}</strong></p>
-            <p>Среднее в день: <strong>{{ stats.average_per_day }}</strong></p>
+            <p>Среднее количество файлов в день: <strong>{{ stats.average_per_day }}</strong></p>
         </div>
     </div>
 
-    <!-- Последние 7 дней -->
-    <div class="card shadow-sm mb-4" data-aos="fade-up">
+    <!-- Таблица последних 7 дней -->
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h3 class="text-center">📅 Последние 7 дней</h3>
             <table class="table table-bordered text-center">
                 <thead class="table-primary">
-                <tr>
-                    <th>Дата 📆</th>
-                    <th>Файлов 📁</th>
-                    <th>Пользователей 👥</th>
-                </tr>
+                    <tr>
+                        <th>Дата 📅</th>
+                        <th>Файлов 📁</th>
+                        <th>Пользователей 👥</th>
+                    </tr>
                 </thead>
                 <tbody>
-                {% for date, files_count, users_count in stats.last_7_days %}
+                    {% for date, files_count, users_count in stats.last_7_days %}
                     <tr>
                         <td>{{ date }}</td>
                         <td>{{ files_count }}</td>
                         <td>{{ users_count }}</td>
                     </tr>
-                {% endfor %}
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
     <!-- Топ пользователей за неделю -->
-    <div class="card shadow-sm mb-4" data-aos="fade-up">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h3 class="text-center">🌟 Топ пользователей за неделю</h3>
             <table class="table table-bordered text-center">
@@ -68,78 +67,104 @@
         </div>
     </div>
 
-    <!-- Топ-5 активных дней -->
-    <div class="card shadow-sm mb-4" data-aos="fade-up">
-        <div class="card-body">
-            <h3 class="text-center">🔥 Топ-5 активных дней</h3>
-            <ul class="list-group">
-                {% for day, count in stats.top_days %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ day }}</span><span>📁 {{ count }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
+    <!-- График с переключателем -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body text-center">
+            <div class="btn-group mb-3">
+                <button class="btn btn-outline-primary active" id="btnWeek">За неделю</button>
+                <button class="btn btn-outline-primary" id="btnMonth">За месяц</button>
+            </div>
+            <canvas id="dynamicChart"></canvas>
         </div>
     </div>
 
-    <!-- График -->
-    <div class="card shadow-sm" data-aos="fade-up">
-        <div class="card-body">
-            <h3 class="text-center">📈 Динамика файлов и пользователей за последние 7 дней</h3>
-            <canvas id="weeklyChart"></canvas>
-        </div>
-    </div>
-
+    <!-- Экспорт в Excel -->
     <div class="text-center py-4">
         <a href="/export" class="btn btn-success btn-lg">📥 Экспорт в Excel</a>
     </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 <script>
-AOS.init();
+const weeklyData = {
+    labels: [{% for date, _, _ in stats.last_7_days %}'{{date}}',{% endfor %}],
+    files: [{% for _, files, _ in stats.last_7_days %}{{files}},{% endfor %}],
+    users: [{% for _, _, users in stats.last_7_days %}{{users}},{% endfor %}]
+};
 
-const ctx = document.getElementById('weeklyChart');
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [{% for date, _, _ in stats.last_7_days %}'{{date}}',{% endfor %}],
-        datasets: [
-            {
-                label: 'Файлов за день',
-                data: [{% for _, files, _ in stats.last_7_days %}{{files}},{% endfor %}],
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59,130,246,0.2)',
-                tension: 0.3,
-                fill: true
+const monthlyData = {
+    labels: [{% for date, _, _ in stats.last_30_days %}'{{date}}',{% endfor %}],
+    files: [{% for _, files, _ in stats.last_30_days %}{{files}},{% endfor %}],
+    users: [{% for _, _, users in stats.last_30_days %}{{users}},{% endfor %}]
+};
+
+let currentChart;
+function renderChart(data, title, showUsers = true) {
+    if (currentChart) currentChart.destroy();
+    const ctx = document.getElementById('dynamicChart');
+    currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Файлов',
+                    data: data.files,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    tension: 0.3,
+                    fill: true
+                },
+                ...(showUsers ? [{
+                    label: 'Пользователей',
+                    data: data.users,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.2)',
+                    tension: 0.3,
+                    fill: true
+                }] : [])
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {display: true, text: '📈 Динамика загрузок', font:{size:16}}
             },
-            {
-                label: 'Пользователей за день',
-                data: [{% for _, _, users in stats.last_7_days %}{{users}},{% endfor %}],
-                borderColor: '#ef4444',
-                backgroundColor: 'rgba(239,68,68,0.2)',
-                tension: 0.3,
-                fill: true
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            x: {
-                ticks: {maxRotation:45,minRotation:45}
-            },
-            y: {
-                beginAtZero: true
+            scales: {
+                x: {ticks: {maxRotation:45,minRotation:45}},
+                y: {beginAtZero:true}
             }
         }
-    }
-});
+    });
+}
 
-// автообновление страницы каждые 5 минут
+// события для кнопок
+document.getElementById('btnWeek').onclick = function(){
+    renderChart(weeklyData, true);
+    this.classList.add('active');
+    document.getElementById('btnMonth').classList.remove('active');
+}
+
+document.getElementById('btnMonth').onclick = function(){
+    renderChart(monthlyData, false);
+    this.classList.add('active');
+    document.getElementById('btnWeek').classList.remove('active');
+}
+
+// Загрузка графика по умолчанию (7 дней)
+renderChart(weeklyData, true);
+
+// автообновление раз в 5 минут
 setTimeout(() => location.reload(), 300000);
 </script>
+
+<style>
+.btn.active {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+</style>
+
 </body>
 </html>
 
