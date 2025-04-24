@@ -1,170 +1,190 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Расширенная статистика файлов</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Расширенная статистика файлов</title>
+  <!-- Bootstrap & Chart.js -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light">
 <div class="container py-5">
 
-    <!-- Общая статистика -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body text-center">
-            <h2>📌 Общая статистика файлов</h2>
-            <p>Всего файлов: <strong>{{ stats.total_files }}</strong></p>
-            <p>Среднее количество файлов в день: <strong>{{ stats.average_per_day }}</strong></p>
-        </div>
+  <!-- 1. Общая статистика -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body text-center">
+      <h2>📌 Общая статистика файлов</h2>
+      <p>Всего файлов: <strong>{{ stats.total_files }}</strong></p>
+      <p>Среднее количество файлов в день: <strong>{{ stats.average_per_day }}</strong></p>
+      <!-- 🕒 Время сервера -->
+      <p>🕒 Время сервера: <strong id="srvTime">{{ server_time }}</strong></p>
     </div>
+  </div>
 
-    <!-- Таблица последних 7 дней -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h3 class="text-center">📅 Последние 7 дней</h3>
-            <table class="table table-bordered text-center">
-                <thead class="table-primary">
-                    <tr>
-                        <th>Дата 📅</th>
-                        <th>Файлов 📁</th>
-                        <th>Пользователей 👥</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for date, files_count, users_count in stats.last_7_days %}
-                    <tr>
-                        <td>{{ date }}</td>
-                        <td>{{ files_count }}</td>
-                        <td>{{ users_count }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <!-- 2. Таблица последних 7 дней -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h3 class="text-center">📅 Последние 7 дней</h3>
+      <table class="table table-bordered text-center">
+        <thead class="table-primary">
+        <tr><th>Дата 📅</th><th>Файлы 📁</th><th>Пользователи 👥</th></tr>
+        </thead>
+        <tbody>
+        {% for date, files_count, users_count in stats.last_7_days %}
+          <tr>
+            <td><a href="#" class="date-link" data-date="{{ date }}">{{ date }}</a></td>
+            <td>{{ files_count }}</td>
+            <td>{{ users_count }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- Топ пользователей за неделю -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h3 class="text-center">🌟 Топ пользователей за неделю</h3>
-            <table class="table table-bordered text-center">
-                <thead class="table-warning">
-                <tr>
-                    <th>Пользователь</th>
-                    <th>Файлов</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for user, count in stats.top_users_week %}
-                    <tr>
-                        <td>{{ user }}</td>
-                        <td>{{ count }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <!-- 3. Топ пользователей -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h3 class="text-center">🌟 Топ пользователей за неделю</h3>
+      <table class="table table-bordered text-center">
+        <thead class="table-warning"><tr><th>Пользователь</th><th>Файлов</th></tr></thead>
+        <tbody>
+        {% for user, count in stats.top_users_week %}
+          <tr><td>{{ user }}</td><td>{{ count }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- График с переключателем -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body text-center">
-            <div class="btn-group mb-3">
-                <button class="btn btn-outline-primary active" id="btnWeek">За неделю</button>
-                <button class="btn btn-outline-primary" id="btnMonth">За месяц</button>
-            </div>
-            <canvas id="dynamicChart"></canvas>
-        </div>
+  <!-- 4. Переключающийся график Неделя/Месяц -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body text-center">
+      <div class="btn-group mb-3">
+        <button class="btn btn-outline-primary active" id="btnWeek">За неделю</button>
+        <button class="btn btn-outline-primary" id="btnMonth">За месяц</button>
+      </div>
+      <canvas id="dynamicChart"></canvas>
     </div>
+  </div>
 
-    <!-- Экспорт в Excel -->
-    <div class="text-center py-4">
-        <a href="/export" class="btn btn-success btn-lg">📥 Экспорт в Excel</a>
+  <!-- 5. Экспорт -->
+  <div class="text-center py-4">
+    <a href="/export" class="btn btn-success btn-lg">📥 Экспорт в Excel</a>
+  </div>
+
+</div><!-- /container -->
+
+<!-- === Modal 24h === -->
+<div class="modal fade" id="dayModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Детализация за <span id="modalDate"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <canvas id="dayChart"></canvas>
+      </div>
     </div>
-
+  </div>
 </div>
 
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
+/* -------------- ДАННЫЕ с сервера -------------- */
 const weeklyData = {
-    labels: [{% for date, _, _ in stats.last_7_days %}'{{date}}',{% endfor %}],
-    files: [{% for _, files, _ in stats.last_7_days %}{{files}},{% endfor %}],
-    users: [{% for _, _, users in stats.last_7_days %}{{users}},{% endfor %}]
+  labels: [{% for d,_,_ in stats.last_7_days %}'{{d}}',{% endfor %}],
+  files : [{% for _,f,_ in stats.last_7_days %}{{f}},{% endfor %}],
+  users : [{% for _,_,u in stats.last_7_days %}{{u}},{% endfor %}]
 };
-
 const monthlyData = {
-    labels: [{% for date, _, _ in stats.last_30_days %}'{{date}}',{% endfor %}],
-    files: [{% for _, files, _ in stats.last_30_days %}{{files}},{% endfor %}],
-    users: [{% for _, _, users in stats.last_30_days %}{{users}},{% endfor %}]
+  labels: [{% for d,_,_ in stats.last_30_days %}'{{d}}',{% endfor %}],
+  files : [{% for _,f,_ in stats.last_30_days %}{{f}},{% endfor %}],
+  users : [{% for _,_,u in stats.last_30_days %}{{u}},{% endfor %}]
 };
 
+/* -------------- ГРАФИК Неделя/Месяц -------------- */
 let currentChart;
-function renderChart(data, title, showUsers = true) {
-    if (currentChart) currentChart.destroy();
-    const ctx = document.getElementById('dynamicChart');
-    currentChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: [
-                {
-                    label: 'Файлов',
-                    data: data.files,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.2)',
-                    tension: 0.3,
-                    fill: true
-                },
-                ...(showUsers ? [{
-                    label: 'Пользователей',
-                    data: data.users,
-                    borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239,68,68,0.2)',
-                    tension: 0.3,
-                    fill: true
-                }] : [])
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {display: true, text: '📈 Динамика загрузок', font:{size:16}}
-            },
-            scales: {
-                x: {ticks: {maxRotation:45,minRotation:45}},
-                y: {beginAtZero:true}
-            }
-        }
-    });
+function renderChart(data, showUsers=true){
+  if (currentChart) currentChart.destroy();
+  currentChart = new Chart(document.getElementById('dynamicChart'), {
+    type:'line',
+    data:{
+      labels:data.labels,
+      datasets:[
+        {label:'Файлы',data:data.files,
+         borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',
+         tension:0.3,fill:true},
+        ...(showUsers?[{label:'Пользователи',data:data.users,
+         borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.2)',
+         tension:0.3,fill:true}]:[])
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{title:{display:true,text:'📈 Динамика загрузок',font:{size:16}}},
+      scales:{x:{ticks:{maxRotation:45,minRotation:45}},y:{beginAtZero:true}}
+    }
+  });
 }
+document.getElementById('btnWeek').onclick = ()=>{
+  renderChart(weeklyData,true);
+  btnWeek.classList.add('active');btnMonth.classList.remove('active');
+};
+document.getElementById('btnMonth').onclick = ()=>{
+  renderChart(monthlyData,false);
+  btnMonth.classList.add('active');btnWeek.classList.remove('active');
+};
+renderChart(weeklyData,true);
+setTimeout(()=>location.reload(),300000); // авто-обновление через 5 мин
 
-// события для кнопок
-document.getElementById('btnWeek').onclick = function(){
-    renderChart(weeklyData, true);
-    this.classList.add('active');
-    document.getElementById('btnMonth').classList.remove('active');
+/* -------------- ГРАФИК «24 часа» -------------- */
+function renderDayChart(hours){
+  if (window.dayChartInstance) window.dayChartInstance.destroy();
+  window.dayChartInstance = new Chart(document.getElementById('dayChart'),{
+    type:'line',
+    data:{
+      labels:Array.from({length:24},(_,h)=>String(h).padStart(2,'0')+':00'),
+      datasets:[{label:'Файлы',data:hours,
+        borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',
+        tension:0.3,fill:true}]
+    },
+    options:{
+      responsive:true,
+      plugins:{title:{display:true,text:'📊 Активность по часам',font:{size:16}}},
+      scales:{x:{ticks:{maxRotation:45,minRotation:45}},y:{beginAtZero:true}}
+    }
+  });
 }
+document.querySelectorAll('.date-link').forEach(el=>{
+  el.addEventListener('click',e=>{
+    e.preventDefault();
+    const date=el.dataset.date;
+    fetch('/day/'+date)
+      .then(r=>r.json())
+      .then(d=>{
+        document.getElementById('modalDate').textContent=date;
+        renderDayChart(d.hourly);
+        new bootstrap.Modal(document.getElementById('dayModal')).show();
+      });
+  });
+});
 
-document.getElementById('btnMonth').onclick = function(){
-    renderChart(monthlyData, false);
-    this.classList.add('active');
-    document.getElementById('btnWeek').classList.remove('active');
-}
-
-// Загрузка графика по умолчанию (7 дней)
-renderChart(weeklyData, true);
-
-// автообновление раз в 5 минут
-setTimeout(() => location.reload(), 300000);
+/* -------------- АВТО-ОБНОВЛЕНИЕ ВРЕМЕНИ СЕРВЕРА -------------- */
+setInterval(()=>{
+  fetch('/server_time')
+    .then(r=>r.json())
+    .then(d=>{ document.getElementById('srvTime').textContent=d.now;});
+},50000); // каждые 50 секунд
 </script>
 
 <style>
-.btn.active {
-    background-color: #3b82f6 !important;
-    color: white !important;
-}
+.btn.active{background-color:#3b82f6!important;color:white!important;}
 </style>
-
 </body>
 </html>
 
