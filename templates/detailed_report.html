@@ -9,140 +9,559 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-light">
-<div class="container py-5">
+<body>
+<div class="dashboard-container">
 
-  <!-- 1. Общая статистика -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body text-center">
-      <h2>📌 Общая статистика файлов</h2>
-      <p>Всего файлов: <strong>{{ stats.total_files }}</strong></p>
-      <p>Среднее количество файлов в день: <strong>{{ stats.average_per_day }}</strong></p>
-      <p>🕒 Время сервера: <strong id="srvTime">{{ server_time }}</strong></p>
+  <header class="dashboard-header">
+    <h1>Расширенная статистика файлов</h1>
+    <p class="server-time">🕒 Время сервера: <strong id="srvTime">{{ server_time }}</strong></p>
+  </header>
+
+  <section class="neo-card kpi-grid">
+    <div class="kpi-item">
+      <h2>📌 Всего файлов</h2>
+      <p>{{ stats.total_files }}</p>
     </div>
-  </div>
-
-  <!-- 2. Последние 7 дней -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h3 class="text-center">📅 Последние 7 дней</h3>
-      <table class="table table-bordered text-center">
-        <thead class="table-primary">
-          <tr><th>Дата 📅</th><th>Файлы 📁</th><th>Пользователи 👥</th></tr>
-        </thead>
-        <tbody>
-        {% for date, files_count, users_count in stats.last_7_days %}
-          <tr>
-            <td><a href="#" class="date-link" data-date="{{ date }}">{{ date }}</a></td>
-            <td>{{ files_count }}</td>
-            <td>{{ users_count }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+    <div class="kpi-item">
+      <h2>📊 Среднее в день</h2>
+      <p>{{ stats.average_per_day }}</p>
     </div>
-  </div>
-
-  <!-- 3. Топ-10 пользователей -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h3 class="text-center">🌟 Топ пользователей за неделю</h3>
-      <table class="table table-bordered text-center">
-        <thead class="table-warning"><tr><th>Пользователь</th><th>Файлов</th></tr></thead>
-        <tbody>
-        {% for user, count in stats.top_users_week %}
-          <tr><td>{{ user }}</td><td>{{ count }}</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
+    <div class="kpi-item">
+      <h2>👥 Уникальных пользователей</h2>
+      <p>{{ stats.unique_users_count_in_range | default('0') }}</p>
     </div>
-  </div>
+  </section>
 
-  <!-- 4. График Неделя / Месяц -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body text-center">
-      <div class="btn-group mb-3">
-        <button class="btn btn-outline-primary active" id="btnWeek">За неделю</button>
-        <button class="btn btn-outline-primary" id="btnMonth">За месяц</button>
+  <section class="neo-card date-filters">
+    <h3 class="neo-card-title">Фильтр по дате</h3>
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="startDateInput">Начальная дата:</label>
+        <input type="date" id="startDateInput" class="neo-input" value="{{ current_start_date if current_start_date else '' }}">
       </div>
-      <canvas id="dynamicChart"></canvas>
+      <div class="filter-group">
+        <label for="endDateInput">Конечная дата:</label>
+        <input type="date" id="endDateInput" class="neo-input" value="{{ current_end_date if current_end_date else '' }}">
+      </div>
+      <div class="filter-buttons">
+        <button class="neo-button" id="applyDateFilterBtn">Применить</button>
+        <button class="neo-button" id="btnLast7Days">7 дней</button>
+        <button class="neo-button" id="btnLast30Days">30 дней</button>
+        <button class="neo-button" id="btnThisMonth">Этот месяц</button>
+        <button class="neo-button" id="btnAllTime">Весь период</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="neo-card chart-container">
+    <!-- Title will be set by Chart.js options -->
+    <canvas id="dynamicChart"></canvas>
+  </section>
+
+  <div class="activity-patterns-grid">
+    <div class="neo-card">
+      <div class="neo-card-header">
+        <h4>🕒 Hourly Activity Distribution</h4>
+      </div>
+      <div class="neo-card-body chart-body-fixed-height">
+        <canvas id="hourlyActivityChart"></canvas>
+      </div>
+    </div>
+    <div class="neo-card">
+      <div class="neo-card-header">
+        <h4>🗓️ Day-of-Week Activity</h4>
+      </div>
+      <div class="neo-card-body chart-body-fixed-height">
+        <canvas id="dayOfWeekActivityChart"></canvas>
+      </div>
     </div>
   </div>
 
-  <!-- 5. Экспорт -->
-  <div class="text-center py-4">
-    <a href="/export" class="btn btn-success btn-lg">📥 Экспорт в Excel</a>
+  <section class="neo-card" id="userDeepDiveCard">
+    <h3 class="neo-card-title">🔍 Статистика по пользователю</h3>
+    <div class="user-select-controls">
+      <div class="filter-group" style="flex-grow: 3;"> 
+        <label for="userStatsSelect">Выберите пользователя:</label>
+        <select id="userStatsSelect" class="neo-input">
+          <option value="">-- Выберите пользователя --</option>
+        </select>
+      </div>
+      <div class="filter-group" style="align-self: flex-end;"> 
+         <button id="viewUserStatsBtn" class="neo-button">Показать статистику</button>
+      </div>
+    </div>
+
+    <div id="userStatsDisplayArea" style="display: none; margin-top: 20px;">
+      <div class="neo-card-header" style="margin-bottom: 10px; padding-bottom: 10px;"> 
+        <h4>Статистика для <span id="selectedUserName" style="color: var(--primary-color);">N/A</span></h4>
+      </div>
+      <p class="user-kpi">Всего файлов за выбранный период: <strong id="userTotalFiles">0</strong></p>
+      
+      <div class="user-charts-grid">
+        <div class="neo-card chart-body-fixed-height"> 
+           <div class="neo-card-header" style="padding-bottom: 10px; margin-bottom:10px; border-bottom: none;">
+             <h5 style="font-size: 1em; color: var(--text-light); margin:0;">Daily Trend</h5>
+           </div>
+          <canvas id="userDailyTrendChart"></canvas>
+        </div>
+        <div class="neo-card chart-body-fixed-height">
+           <div class="neo-card-header" style="padding-bottom: 10px; margin-bottom:10px; border-bottom: none;">
+             <h5 style="font-size: 1em; color: var(--text-light); margin:0;">Hourly Activity</h5>
+           </div>
+          <canvas id="userHourlyActivityChart"></canvas>
+        </div>
+        <div class="neo-card chart-body-fixed-height">
+            <div class="neo-card-header" style="padding-bottom: 10px; margin-bottom:10px; border-bottom: none;">
+             <h5 style="font-size: 1em; color: var(--text-light); margin:0;">Day of Week Activity</h5>
+           </div>
+          <canvas id="userDayOfWeekActivityChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tables-grid">
+    <section class="neo-card">
+      <h3 class="neo-card-title">📅 Последние 7 дней</h3>
+      <div class="table-responsive">
+        <table class="neo-table">
+          <thead>
+            <tr><th>Дата 📅</th><th>Файлы 📁</th><th>Пользователи 👥</th></tr>
+          </thead>
+          <tbody>
+          {% for date, files_count, users_count in stats.last_7_days %}
+            <tr>
+              <td><a href="#" class="neo-link date-link" data-date="{{ date }}">{{ date }}</a></td>
+              <td>{{ files_count }}</td>
+              <td>{{ users_count }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="neo-card">
+      <h3 class="neo-card-title">🌟 Топ пользователей ({{ stats.effective_start_date | default('N/A') }} - {{ stats.effective_end_date | default('N/A') }})</h3>
+      <div class="table-responsive">
+        <table class="neo-table">
+          <thead><tr><th>Пользователь</th><th>Файлов</th></tr></thead>
+          <tbody>
+          {% for user, count in stats.top_users_in_range %}
+            <tr><td>{{ user }}</td><td>{{ count }}</td></tr>
+          {% else %}
+            <tr><td colspan="2">Нет данных для выбранного периода.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
-</div> <!-- /container -->
+  
+  <footer class="dashboard-footer">
+    <a href="/export?start_date={{current_start_date | default('')}}&end_date={{current_end_date | default('')}}" class="neo-button export-button">📥 Экспорт в Excel</a>
+  </footer>
+
+</div> <!-- /dashboard-container -->
 
 <!-- === Модальное окно 24 часа === -->
 <div class="modal fade" id="dayModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Детализация за <span id="modalDate"></span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="neo-card modal-content-neo">
+      <div class="modal-header-neo">
+        <h5 class="modal-title-neo">Детализация за <span id="modalDate"></span></h5>
+        <button type="button" class="neo-close-button" data-bs-dismiss="modal" aria-label="Close">&times;</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body-neo">
         <canvas id="dayChart"></canvas>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Bootstrap JS -->
+<!-- Bootstrap JS (needed for Modal) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 /* ---------------- ДАННЫЕ с сервера ---------------- */
-const weeklyData = {
-  labels:[{% for d,_,_ in stats.last_7_days %}'{{d}}',{% endfor %}],
-  files :[{% for _,f,_ in stats.last_7_days %}{{f}},{% endfor %}],
-  users :[{% for _,_,u in stats.last_7_days %}{{u}},{% endfor %}]
-};
-const monthlyData = {
-  labels:[{% for d,_,_ in stats.last_30_days %}'{{d}}',{% endfor %}],
-  files :[{% for _,f,_ in stats.last_30_days %}{{f}},{% endfor %}],
-  users :[{% for _,_,u in stats.last_30_days %}{{u}},{% endfor %}]
-};
+const dailyStats = {{ stats.daily | tojson }};
+const dailyUserStats = {{ stats.daily_user_counts | tojson }};
+const hourlyDistribution = {{ stats.hourly_distribution | tojson }};
+const dayOfWeekDistribution = {{ stats.day_of_week_distribution | tojson }};
+const allUserActivityList = {{ stats.all_user_activity_list | default('[]') | tojson }};
+const currentStartDate = "{{ current_start_date if current_start_date else '' }}";
+const currentEndDate = "{{ current_end_date if current_end_date else '' }}";
+const chartFont = "'Inter', sans-serif";
+const primaryColor = '#3b82f6'; // Blue
+const secondaryColor = '#ef4444'; // Red
+const textColor = '#374151'; // Dark gray for text
+const gridColor = 'rgba(209, 213, 219, 0.5)'; // Light gray for grids
+const chartTitleColor = '#1f2937'; // Even darker for titles
 
-/* --------------- График Неделя / Месяц --------------- */
+/* --------------- График Динамика за выбранный период --------------- */
 let currentChart;
-function renderChart(data,showUsers=true){
-  if(currentChart) currentChart.destroy();
-  currentChart = new Chart(document.getElementById('dynamicChart'),{
-    type:'line',
-    data:{
-      labels:data.labels,
-      datasets:[
-        {label:'Файлы',data:data.files,
-         borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',
-         tension:0.3,fill:true},
-        ...(showUsers?[{label:'Пользователи',data:data.users,
-         borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.2)',
-         tension:0.3,fill:true}]:[])
-      ]
+function renderChart(dailyData, dailyUserData, titleText = 'Динамика загрузок') {
+  if (currentChart) currentChart.destroy();
+  
+  const labels = dailyData.map(item => item[0]);
+  const filesData = dailyData.map(item => item[1]);
+  const usersData = dailyUserData.map(item => item[1]);
+
+  const datasets = [
+    {
+      label: 'Файлы',
+      data: filesData,
+      borderColor: primaryColor,
+      backgroundColor: 'rgba(59,130,246,0.1)', 
+      tension: 0.4, 
+      fill: true,
+      pointBackgroundColor: primaryColor,
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: primaryColor,
+      pointHoverRadius: 7,
+      pointHoverBorderWidth: 2,
+      pointRadius: 5
+    }
+  ];
+
+  if (usersData && usersData.length > 0 && usersData.some(u => u > 0)) {
+    datasets.push({
+      label: 'Пользователи',
+      data: usersData,
+      borderColor: secondaryColor,
+      backgroundColor: 'rgba(239,68,68,0.1)', 
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: secondaryColor,
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: secondaryColor,
+      pointHoverRadius: 7,
+      pointHoverBorderWidth: 2,
+      pointRadius: 5
+    });
+  }
+
+  currentChart = new Chart(document.getElementById('dynamicChart'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: datasets
     },
-    options:{responsive:true,
-      plugins:{title:{display:true,text:'📈 Динамика загрузок',font:{size:16}}},
-      scales:{x:{ticks:{maxRotation:45,minRotation:45}},y:{beginAtZero:true}}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: true, text: titleText, font: { size: 18, family: chartFont, weight: '600' }, color: chartTitleColor, padding: { top:10, bottom: 20 } },
+        legend: { 
+            display: datasets.length > 1,
+            position: 'bottom',
+            labels: { font: { family: chartFont, size: 14 }, color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 8 }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleFont: { family: chartFont, size: 14, weight: '600' },
+            bodyFont: { family: chartFont, size: 12 },
+            padding: 12,
+            cornerRadius: 8,
+            displayColors: true,
+            boxPadding: 4,
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
+        }
+      },
+      scales: {
+        x: { 
+            ticks: { maxRotation: 45, minRotation: 20, font: { family: chartFont, size: 12 }, color: textColor },
+            grid: { display: false } 
+        },
+        y: { 
+            beginAtZero: true,
+            ticks: { font: { family: chartFont, size: 12 }, color: textColor, padding: 10 },
+            grid: { color: gridColor, drawBorder: false }
+        }
+      },
+      layout: {
+        padding: { left: 0, right: 10, top: 0, bottom: 0 } 
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      }
     }
   });
 }
-document.getElementById('btnWeek').onclick = ()=>{
-  renderChart(weeklyData,true);
-  btnWeek.classList.add('active'); btnMonth.classList.remove('active');
-};
-document.getElementById('btnMonth').onclick = ()=>{
-  renderChart(monthlyData,false);
-  btnMonth.classList.add('active'); btnWeek.classList.remove('active');
-};
-renderChart(weeklyData,true);
+
+renderChart(dailyStats, dailyUserStats, 
+    `Динамика с ${currentStartDate || 'начала'} по ${currentEndDate || 'конец'}`);
+
+/* --------------- Hourly Activity Chart --------------- */
+function renderHourlyActivityChart() {
+  const hourlyLabels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
+  new Chart(document.getElementById('hourlyActivityChart'), {
+    type: 'bar',
+    data: {
+      labels: hourlyLabels,
+      datasets: [{
+        label: 'Файлов в час',
+        data: hourlyDistribution,
+        backgroundColor: 'rgba(59, 130, 246, 0.6)', // primaryColor with some opacity
+        borderColor: primaryColor,
+        borderWidth: 1,
+        borderRadius: 5,
+        hoverBackgroundColor: 'rgba(59, 130, 246, 0.8)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: false }, // Title is in neo-card-header
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleFont: { family: chartFont, size: 13, weight: '600' },
+            bodyFont: { family: chartFont, size: 11 },
+            padding: 10,
+            cornerRadius: 6,
+            displayColors: false
+        }
+      },
+      scales: {
+        x: { ticks: { font: { family: chartFont, size: 10 }, color: textColor }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { color: gridColor, drawBorder: false } }
+      }
+    }
+  });
+}
+
+/* --------------- Day-of-Week Activity Chart --------------- */
+function renderDayOfWeekActivityChart() {
+  const dowLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  new Chart(document.getElementById('dayOfWeekActivityChart'), {
+    type: 'bar',
+    data: {
+      labels: dowLabels,
+      datasets: [{
+        label: 'Файлов за день недели',
+        data: dayOfWeekDistribution,
+        backgroundColor: 'rgba(239, 68, 68, 0.6)', // secondaryColor with some opacity
+        borderColor: secondaryColor,
+        borderWidth: 1,
+        borderRadius: 5,
+        hoverBackgroundColor: 'rgba(239, 68, 68, 0.8)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: false }, // Title is in neo-card-header
+        legend: { display: false },
+         tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleFont: { family: chartFont, size: 13, weight: '600' },
+            bodyFont: { family: chartFont, size: 11 },
+            padding: 10,
+            cornerRadius: 6,
+            displayColors: false
+        }
+      },
+      scales: {
+        x: { ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { color: gridColor, drawBorder: false } }
+      }
+    }
+  });
+}
+
+// Render all charts on load
+if (document.getElementById('hourlyActivityChart')) renderHourlyActivityChart();
+if (document.getElementById('dayOfWeekActivityChart')) renderDayOfWeekActivityChart();
+
+/* ----------- Populate User Selector ----------- */
+const userSelect = document.getElementById('userStatsSelect');
+if (userSelect && typeof allUserActivityList !== 'undefined' && allUserActivityList && allUserActivityList.length > 0) {
+    allUserActivityList.forEach(userData => { // userData is [userId, count]
+        // userData[0] is user_id, userData[1] is count
+        const option = new Option(`${userData[0]} (${userData[1]} files)`, userData[0]);
+        userSelect.add(option);
+    });
+} else if (userSelect) { // Handle case where allUserActivityList might be empty or undefined
+    const option = new Option('Нет данных по пользователям для этого периода', '');
+    option.disabled = true;
+    userSelect.add(option);
+    // Optionally disable the select and button if no users
+    const viewUserStatsBtn = document.getElementById('viewUserStatsBtn');
+    if (viewUserStatsBtn) viewUserStatsBtn.disabled = true;
+    userSelect.disabled = true;
+}
+
+/* ----------- User Specific Stats Chart Instances ----------- */
+let userDailyTrendChartInstance = null;
+let userHourlyActivityChartInstance = null;
+let userDayOfWeekActivityChartInstance = null;
+
+/* ----------- Render User Specific Charts ----------- */
+function renderUserDailyTrendChart(dailyActivity) {
+    if (userDailyTrendChartInstance) userDailyTrendChartInstance.destroy();
+    const labels = dailyActivity.map(item => item[0]);
+    const data = dailyActivity.map(item => item[1]);
+    userDailyTrendChartInstance = new Chart(document.getElementById('userDailyTrendChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Файлов в день',
+                data: data,
+                borderColor: primaryColor,
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: primaryColor,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: primaryColor,
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: textColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { color: gridColor, drawBorder: false } } } }
+    });
+}
+
+function renderUserHourlyActivityChart(hourlyData) {
+    if (userHourlyActivityChartInstance) userHourlyActivityChartInstance.destroy();
+    const hourlyLabels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
+    userHourlyActivityChartInstance = new Chart(document.getElementById('userHourlyActivityChart'), {
+        type: 'bar',
+        data: {
+            labels: hourlyLabels,
+            datasets: [{
+                label: 'Файлов в час',
+                data: hourlyData,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: primaryColor,
+                borderWidth: 1,
+                borderRadius: 5,
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: textColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { color: gridColor, drawBorder: false } } } }
+    });
+}
+
+function renderUserDayOfWeekActivityChart(dowData) {
+    if (userDayOfWeekActivityChartInstance) userDayOfWeekActivityChartInstance.destroy();
+    const dowLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    userDayOfWeekActivityChartInstance = new Chart(document.getElementById('userDayOfWeekActivityChart'), {
+        type: 'bar',
+        data: {
+            labels: dowLabels,
+            datasets: [{
+                label: 'Файлов за день недели',
+                data: dowData,
+                backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                borderColor: secondaryColor,
+                borderWidth: 1,
+                borderRadius: 5,
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { color: gridColor, drawBorder: false } } } }
+    });
+}
+
+/* ----------- Fetch and Display User Stats ----------- */
+async function fetchAndDisplayUserStats() {
+    const selectedUserId = userSelect.value;
+    if (!selectedUserId) {
+        alert("Пожалуйста, выберите пользователя.");
+        return;
+    }
+
+    const startDate = document.getElementById('startDateInput').value;
+    const endDate = document.getElementById('endDateInput').value;
+    
+    let apiUrl = `/api/user_activity/${selectedUserId}`;
+    const params = [];
+    if (startDate) params.push(`start_date=${startDate}`);
+    if (endDate) params.push(`end_date=${endDate}`);
+    if (params.length > 0) apiUrl += '?' + params.join('&');
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const userData = await response.json();
+
+        document.getElementById('selectedUserName').textContent = userData.user_id;
+        document.getElementById('userTotalFiles').textContent = userData.total_files;
+
+        renderUserDailyTrendChart(userData.daily_activity);
+        renderUserHourlyActivityChart(userData.hourly_distribution);
+        renderUserDayOfWeekActivityChart(userData.day_of_week_distribution);
+
+        document.getElementById('userStatsDisplayArea').style.display = 'block';
+
+    } catch (error) {
+        console.error("Could not fetch user stats:", error);
+        alert("Не удалось загрузить статистику пользователя. Проверьте консоль для деталей.");
+        document.getElementById('userStatsDisplayArea').style.display = 'none';
+    }
+}
+
+const viewUserStatsBtn = document.getElementById('viewUserStatsBtn');
+if (viewUserStatsBtn) {
+    viewUserStatsBtn.addEventListener('click', fetchAndDisplayUserStats);
+}
+
+
+/* ----------- Обработчики кнопок и фильтров дат ----------- */
+document.getElementById('applyDateFilterBtn').addEventListener('click', () => {
+  const startDate = document.getElementById('startDateInput').value;
+  const endDate = document.getElementById('endDateInput').value;
+  let url = '/';
+  const params = [];
+  if (startDate) params.push(`start_date=${startDate}`);
+  if (endDate) params.push(`end_date=${endDate}`);
+  if (params.length > 0) url += '?' + params.join('&');
+  window.location.href = url;
+});
+
+function setDatesAndApply(daysAgoStart, daysAgoEnd = 0) {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() - daysAgoEnd);
+    document.getElementById('endDateInput').value = endDate.toISOString().slice(0,10);
+
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - daysAgoStart);
+    document.getElementById('startDateInput').value = startDate.toISOString().slice(0,10);
+    
+    document.getElementById('applyDateFilterBtn').click();
+}
+
+document.getElementById('btnLast7Days').addEventListener('click', () => setDatesAndApply(6));
+document.getElementById('btnLast30Days').addEventListener('click', () => setDatesAndApply(29));
+
+document.getElementById('btnThisMonth').addEventListener('click', () => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    document.getElementById('startDateInput').value = firstDayOfMonth.toISOString().slice(0,10);
+    document.getElementById('endDateInput').value = lastDayOfMonth.toISOString().slice(0,10);
+    document.getElementById('applyDateFilterBtn').click();
+});
+
+document.getElementById('btnAllTime').addEventListener('click', () => {
+  document.getElementById('startDateInput').value = '';
+  document.getElementById('endDateInput').value = '';
+  window.location.href = '/';
+});
 
 /* ----------- Авто-перезагрузка страницы (15 мин) ----------- */
 setTimeout(()=>location.reload(), 900000);
 
-/* ---------------- График «24 часа» ---------------- */
+/* ---------------- График «24 часа» в модалке ---------------- */
 let dayChartInstance, dayRefreshTimer=null;
 
 function renderDayChart(hours){
@@ -151,13 +570,45 @@ function renderDayChart(hours){
     type:'line',
     data:{
       labels:Array.from({length:24},(_,h)=>String(h).padStart(2,'0')+':00'),
-      datasets:[{label:'Файлы',data:hours,
-        borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',
-        tension:0.3,fill:true}]
+      datasets:[{
+          label:'Файлы',
+          data:hours,
+          borderColor: primaryColor,
+          backgroundColor: 'rgba(59,130,246,0.1)',
+          tension:0.4,
+          fill:true,
+          pointBackgroundColor: primaryColor,
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: primaryColor,
+          pointHoverRadius: 6,
+          pointHoverBorderWidth: 2,
+          pointRadius: 4
+      }]
     },
-    options:{responsive:true,
-      plugins:{title:{display:true,text:'📊 Активность по часам',font:{size:16}}},
-      scales:{y:{beginAtZero:true}}
+    options:{
+        responsive:true,
+        maintainAspectRatio: false,
+        plugins:{
+            title:{display:true,text:'📊 Активность по часам',font:{size:16, family: chartFont, weight: '600' }, color: chartTitleColor, padding: {bottom: 15}},
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleFont: { family: chartFont, size: 13, weight: '600' },
+                bodyFont: { family: chartFont, size: 11 },
+                padding: 10,
+                cornerRadius: 6,
+                displayColors: false
+            }
+        },
+        scales:{
+            y:{beginAtZero:true, ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { color: gridColor, drawBorder: false }},
+            x:{ticks: { font: { family: chartFont, size: 11 }, color: textColor }, grid: { display: false }}
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index',
+        }
     }
   });
 }
@@ -166,8 +617,10 @@ function refreshDayChart(date){
   fetch('/day/'+date)
     .then(r=>r.json())
     .then(d=>{
-      dayChartInstance.data.datasets[0].data = d.hourly;
-      dayChartInstance.update();
+      if (dayChartInstance && d.hourly) {
+        dayChartInstance.data.datasets[0].data = d.hourly;
+        dayChartInstance.update();
+      }
     });
 }
 
@@ -178,35 +631,514 @@ document.querySelectorAll('.date-link').forEach(el=>{
     fetch('/day/'+date)
       .then(r=>r.json())
       .then(d=>{
+        if (d.error) { console.error("Error fetching day detail:", d.error); return; }
         document.getElementById('modalDate').textContent = date;
         renderDayChart(d.hourly);
 
-        /* авто-обновление только для сегодняшнего дня */
         if(date === new Date().toISOString().slice(0,10)){
-          dayRefreshTimer = setInterval(()=>refreshDayChart(date), 60000); // 1 мин
+          if(dayRefreshTimer) clearInterval(dayRefreshTimer); 
+          dayRefreshTimer = setInterval(()=>refreshDayChart(date), 60000);
+        } else {
+          if(dayRefreshTimer) clearInterval(dayRefreshTimer); 
         }
-        new bootstrap.Modal(document.getElementById('dayModal')).show();
+        
+        let dayModalElement = document.getElementById('dayModal');
+        let modalInstance = bootstrap.Modal.getInstance(dayModalElement);
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(dayModalElement);
+        }
+        modalInstance.show();
       });
   });
 });
 
-/* чистим таймер при закрытии модалки */
 document.getElementById('dayModal')
   .addEventListener('hidden.bs.modal',()=>{
     if(dayRefreshTimer){ clearInterval(dayRefreshTimer); dayRefreshTimer=null; }
   });
 
-/* --------- Авто-обновление строки «Время сервера» --------- */
 setInterval(()=>{
   fetch('/server_time')
     .then(r=>r.json())
-    .then(d=>{ document.getElementById('srvTime').textContent = d.now; });
-},60000);  // 60 с
+    .then(d=>{ 
+        const srvTimeEl = document.getElementById('srvTime');
+        if (srvTimeEl) srvTimeEl.textContent = d.now; 
+    });
+},60000);
 </script>
 
 <style>
-.btn.active{background-color:#3b82f6!important;color:white!important;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --base-bg: #eef1f5; 
+  --text-color: #374151; 
+  --text-light: #6b7280; 
+  --primary-color: #3b82f6; 
+  --primary-darker: #2563eb;
+  --shadow-light: #ffffff;
+  --shadow-dark: #d1d9e6; /* Adjusted for base-bg */
+  --neo-radius: 20px; 
+  --neo-padding: 25px; 
+  --chart-title-color: #1f2937;
+}
+
+.user-select-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px 20px;
+  align-items: flex-end; /* Aligns button with the bottom of the select input */
+  margin-bottom: 20px;
+}
+.user-select-controls .filter-group { /* Re-use filter-group for consistency */
+    margin-bottom: 0; /* Remove bottom margin if not needed here */
+}
+.user-select-controls .neo-input { /* Select element */
+    min-width: 250px; /* Ensure select is wide enough */
+}
+
+.user-kpi {
+  font-size: 1.1em;
+  text-align: center;
+  margin: 15px 0;
+  color: var(--text-color);
+}
+.user-kpi strong {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+.user-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default to 1 column */
+  gap: var(--neo-padding);
+}
+/* User chart canvases */
+#userDailyTrendChart, #userHourlyActivityChart, #userDayOfWeekActivityChart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+
+.neo-card-header {
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--shadow-dark);
+  text-align: center;
+}
+.neo-card-header h4 {
+  margin: 0;
+  font-size: 1.2em; /* Slightly smaller than neo-card-title */
+  font-weight: 600;
+  color: var(--chart-title-color);
+}
+.neo-card-body {
+  /* General body styles, specific chart height handled by chart-body-fixed-height */
+}
+.chart-body-fixed-height {
+  height: 320px; /* Adjust as needed for bar charts */
+}
+
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--base-bg);
+  color: var(--text-color);
+  margin: 0;
+  padding: 20px; 
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px; 
+  max-width: 1600px; 
+  margin: auto; 
+}
+
+.dashboard-header {
+  text-align: center;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+.dashboard-header h1 {
+  font-size: 2.2em;
+  font-weight: 700;
+  color: var(--chart-title-color);
+  margin-bottom: 0.2em;
+}
+.server-time {
+  font-size: 0.95em;
+  color: var(--text-light);
+}
+
+.neo-card {
+  background-color: var(--base-bg);
+  border-radius: var(--neo-radius);
+  padding: var(--neo-padding);
+  box-shadow: 9px 9px 18px var(--shadow-dark), 
+              -9px -9px 18px var(--shadow-light);
+  transition: box-shadow 0.3s ease;
+}
+.neo-card-title {
+  font-size: 1.4em;
+  font-weight: 600;
+  color: var(--chart-title-color);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--neo-padding);
+}
+.kpi-item {
+  text-align: center;
+  padding: 20px; 
+  background-color: var(--base-bg); 
+  border-radius: 15px; 
+   box-shadow: inset 6px 6px 12px var(--shadow-dark), 
+              inset -6px -6px 12px var(--shadow-light);
+}
+.kpi-item h2 {
+  font-size: 1.05em; /* Slightly smaller */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.kpi-item p {
+  font-size: 2.1em;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+/* Date Filters Section */
+.date-filters .filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px 20px; /* row-gap column-gap */
+  align-items: flex-end;
+  justify-content: center;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Allow groups to grow */
+  min-width: 180px; /* Minimum width for input groups */
+}
+.filter-group label {
+  font-size: 0.85em;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding-top: 22px; /* Align with labels better */
+}
+
+.neo-input {
+  background-color: var(--base-bg);
+  border: none;
+  border-radius: 10px; 
+  padding: 12px 18px;
+  font-size: 1em;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-color);
+  box-shadow: inset 5px 5px 10px var(--shadow-dark), 
+              inset -5px -5px 10px var(--shadow-light);
+  transition: box-shadow 0.3s ease;
+  outline: none;
+  width: 100%; /* Make input take full width of its group */
+  box-sizing: border-box;
+}
+.neo-input:focus {
+  box-shadow: inset 7px 7px 14px var(--shadow-dark), 
+              inset -7px -7px 14px var(--shadow-light),
+              0 0 0 2px var(--primary-color); 
+}
+
+.neo-button {
+  background-color: var(--base-bg);
+  color: var(--text-color);
+  border: none;
+  border-radius: 10px;
+  padding: 11px 18px; /* Slightly adjusted padding */
+  font-size: 0.9em;
+  font-weight: 600; /* Bolder text */
+  cursor: pointer;
+  box-shadow: 6px 6px 12px var(--shadow-dark), 
+              -6px -6px 12px var(--shadow-light);
+  transition: all 0.15s ease-in-out;
+  text-decoration: none; 
+  display: inline-block; 
+}
+.neo-button:hover {
+  color: var(--primary-color);
+  box-shadow: 8px 8px 16px var(--shadow-dark), 
+              -8px -8px 16px var(--shadow-light);
+}
+.neo-button:active {
+  box-shadow: inset 6px 6px 12px var(--shadow-dark), 
+              inset -6px -6px 12px var(--shadow-light);
+  color: var(--primary-darker);
+  font-weight: 600;
+}
+.neo-button.export-button { 
+    background-color: #28a745; 
+    color: white;
+    box-shadow: 6px 6px 12px #1e7e34, -6px -6px 12px #32d056; /* Green shadows */
+}
+.neo-button.export-button:hover {
+    background-color: #218838; 
+    color: white;
+    box-shadow: 8px 8px 16px #1e7e34, -8px -8px 16px #32d056;
+}
+.neo-button.export-button:active {
+    box-shadow: inset 6px 6px 12px #1c6c2e, inset -6px -6px 12px #2db94d;
+    color: #e0e0e0;
+}
+
+
+/* Chart Container */
+.chart-container { /* For the main line chart */
+  height: 480px; 
+  padding: var(--neo-padding);
+}
+#dynamicChart { /* Main line chart canvas */
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Activity Patterns Grid (for new bar charts) */
+.activity-patterns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--neo-padding);
+}
+#hourlyActivityChart, #dayOfWeekActivityChart { /* Canvases for new bar charts */
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+/* Tables Grid */
+.tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: var(--neo-padding);
+}
+.table-responsive {
+  overflow-x: auto; 
+  border-radius: 15px; 
+  padding: 10px; 
+  background-color: var(--base-bg);
+  box-shadow: inset 5px 5px 10px var(--shadow-dark), 
+              inset -5px -5px 10px var(--shadow-light);
+}
+.neo-table {
+  width: 100%;
+  border-collapse: separate; /* Changed for rounded corners on cells if needed */
+  border-spacing: 0;
+  font-size: 0.9em;
+}
+.neo-table th, .neo-table td {
+  padding: 14px 16px; /* Increased padding */
+  text-align: left;
+  border-bottom: 1px solid var(--shadow-dark); 
+}
+.neo-table th:first-child, .neo-table td:first-child { padding-left: 20px; }
+.neo-table th:last-child, .neo-table td:last-child { padding-right: 20px; }
+
+.neo-table thead tr {
+    background-color: transparent; /* Remove any background */
+}
+.neo-table th {
+  font-weight: 600;
+  color: var(--text-light);
+  text-align: center;
+  border-bottom-width: 2px; /* Thicker bottom border for header */
+}
+.neo-table td {
+  text-align: center;
+  color: var(--text-color);
+}
+.neo-table tbody tr:last-child td {
+    border-bottom: none; /* Remove border for last row */
+}
+.neo-table tbody tr:hover {
+  background-color: rgba(0,0,0,0.015); 
+}
+.neo-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+.neo-link:hover {
+  color: var(--primary-darker);
+  text-decoration: underline;
+}
+
+/* Footer */
+.dashboard-footer {
+  text-align: center;
+  padding-top: 20px;
+}
+
+
+/* Modal Styling */
+.modal-backdrop.show {
+    background-color: rgba(0,0,0,0.1); /* Lighter backdrop */
+    backdrop-filter: blur(3px);
+    opacity: 1;
+}
+.modal-dialog { 
+    max-width: 800px; 
+}
+.modal-content-neo {
+  background-color: var(--base-bg);
+  border-radius: var(--neo-radius);
+  padding: var(--neo-padding);
+  box-shadow: 10px 10px 25px var(--shadow-dark), 
+              -10px -10px 25px var(--shadow-light);
+  border: none; 
+  text-align:center;
+}
+.modal-header-neo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--shadow-dark);
+  margin-bottom: 20px;
+}
+.modal-title-neo {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: var(--chart-title-color);
+}
+.neo-close-button {
+  background: transparent;
+  border: none;
+  font-size: 2.2em;
+  line-height: 1;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0 5px;
+  opacity: 0.8;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+.neo-close-button:hover {
+  opacity: 1;
+  color: var(--primary-color);
+  background-color: rgba(0,0,0,0.05);
+}
+.modal-body-neo {
+  padding: 0; 
+  height: 400px; 
+}
+#dayChart {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+/* Responsiveness */
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .user-charts-grid, /* Stack user charts on medium screens too */
+  .activity-patterns-grid,
+  .tables-grid {
+    grid-template-columns: 1fr; 
+  }
+  .date-filters .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-buttons {
+    justify-content: flex-start;
+    padding-top: 10px;
+  }
+   .filter-buttons .neo-button {
+    flex-grow: 1; /* Allow buttons to grow */
+  }
+  .dashboard-header h1 {
+    font-size: 1.9em;
+  }
+}
+
+@media (max-width: 768px) {
+  body { padding: 15px; }
+  .dashboard-container { gap: 20px; }
+  :root {
+    --neo-radius: 18px;
+    --neo-padding: 20px;
+  }
+  .neo-card-title { font-size: 1.25em; }
+  .kpi-item p { font-size: 1.8em; }
+  .neo-button, .neo-input { padding: 12px 16px; font-size: 0.9em;}
+  
+  .filter-buttons {
+     flex-direction: row; /* Keep them in a row but allow wrapping */
+  }
+   .filter-buttons .neo-button {
+      flex-basis: calc(50% - 5px); /* Two buttons per row approx */
+  }
+
+  .modal-dialog {
+      margin: 15px; 
+      max-width: calc(100% - 30px);
+  }
+  .modal-body-neo {
+      height: 320px; 
+  }
+  .dashboard-header h1 {
+    font-size: 1.7em;
+  }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header h1 { font-size: 1.4em; }
+    :root {
+        --neo-radius: 15px;
+        --neo-padding: 15px;
+    }
+    .kpi-grid {
+        grid-template-columns: 1fr; /* Stack KPIs */
+    }
+    .filter-buttons .neo-button {
+      flex-basis: 100%; /* Stack all filter buttons */
+    }
+    .neo-table { font-size: 0.85em; }
+    .neo-table th, .neo-table td { padding: 10px 12px; }
+    .chart-container { height: 350px; }
+    .chart-body-fixed-height { height: 280px; } 
+    .user-charts-grid .chart-body-fixed-height { height: 260px; } /* Slightly smaller for user charts */
+    .modal-body-neo { height: 280px; }
+}
+
+@media (min-width: 993px) { /* On larger screens, user charts in 3 columns */
+    .user-charts-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 </style>
 </body>
 </html>
-
