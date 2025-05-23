@@ -157,9 +157,30 @@ def generate_detailed_report(start_date_str=None, end_date_str=None):
             filtered_daily_items.append((date_str, count))
 
     daily_user_counts_list = []
-    for date_str, _ in filtered_daily_items: # Iterate through the same dates as 'daily' file counts
-        user_count = len(daily_users.get(date_str, set()))
-        daily_user_counts_list.append([date_str, user_count])
+    total_user_interactions_in_range = 0
+    # daily_users is already filtered by the date range as it's populated with file_date_obj within the range
+    for date_key in daily_report.keys(): # Iterate over keys that are confirmed to be in range and have activity
+        total_user_interactions_in_range += len(daily_users[date_key])
+        # For daily_user_counts_list, ensure we only use dates from filtered_daily_items
+        # This check is implicitly handled if filtered_daily_items is the source of date_str
+        
+    # Rebuild daily_user_counts_list based on filtered_daily_items to ensure alignment
+    daily_user_counts_list = []
+    for date_str, _ in filtered_daily_items:
+        user_count_for_day = len(daily_users.get(date_str, set()))
+        daily_user_counts_list.append([date_str, user_count_for_day])
+
+    # Calculate new unique users per day for the filtered range
+    seen_users_in_period = set()
+    new_unique_users_per_day_list = []
+    # daily_users contains all users active on a given day (YYYY-MM-DD) from the original file scan
+    # filtered_daily_items contains [date_str, count] for days within the effective report range, sorted.
+    for date_str, _ in filtered_daily_items: # Iterate by sorted, filtered dates
+        current_day_users = daily_users.get(date_str, set())
+        new_users_for_this_day = current_day_users - seen_users_in_period
+        new_unique_users_per_day_list.append([date_str, len(new_users_for_this_day)])
+        seen_users_in_period.update(current_day_users)
+
 
     return {
         'daily'          : filtered_daily_items, # Use filtered and sorted items
@@ -173,8 +194,10 @@ def generate_detailed_report(start_date_str=None, end_date_str=None):
         'daily_user_counts': daily_user_counts_list,
         'hourly_distribution': hourly_distribution,
         'day_of_week_distribution': day_of_week_distribution,
-        'all_user_activity_list': sorted(user_activity_in_range.items(), key=lambda item: item[0]), # Sorted list of [user_id, count]
+        # 'all_user_activity_list': sorted(user_activity_in_range.items(), key=lambda item: item[0]), # No longer needed
         'unique_users_count_in_range': len(user_activity_in_range),
+        'total_user_interactions_in_range': total_user_interactions_in_range,
+        'new_unique_users_per_day': new_unique_users_per_day_list,
     }
 
 # ----------------------------------------------------------------------
