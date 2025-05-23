@@ -30,6 +30,10 @@
       <h2>👥 Уникальных пользователей</h2>
       <p>{{ stats.unique_users_count_in_range | default('0') }}</p>
     </div>
+    <div class="kpi-item">
+      <h2>🔄 Общее число активностей пользователей</h2>
+      <p>{{ stats.total_user_interactions_in_range | default('0') }}</p>
+    </div>
   </section>
 
   <section class="neo-card date-filters">
@@ -46,7 +50,7 @@
       <div class="filter-buttons">
         <button class="neo-button" id="applyDateFilterBtn">Применить</button>
         <button class="neo-button" id="btnLast7Days">7 дней</button>
-        <button class="neo-button" id="btnLast30Days">30 дней</button>
+        <button class="neo-button" id="btnLast14Days">14 дней</button> 
         <button class="neo-button" id="btnThisMonth">Этот месяц</button>
         <button class="neo-button" id="btnAllTime">Весь период</button>
       </div>
@@ -78,19 +82,8 @@
   </div>
 
   <section class="neo-card" id="userDeepDiveCard">
-    <h3 class="neo-card-title">🔍 Статистика по пользователю</h3>
-    <div class="user-select-controls">
-      <div class="filter-group" style="flex-grow: 3;"> 
-        <label for="userStatsSelect">Выберите пользователя:</label>
-        <select id="userStatsSelect" class="neo-input">
-          <option value="">-- Выберите пользователя --</option>
-        </select>
-      </div>
-      <div class="filter-group" style="align-self: flex-end;"> 
-         <button id="viewUserStatsBtn" class="neo-button">Показать статистику</button>
-      </div>
-    </div>
-
+    <h3 class="neo-card-title">🔍 Статистика по пользователю (выберите из таблицы "Топ пользователей")</h3>
+    <!-- User selection controls removed -->
     <div id="userStatsDisplayArea" style="display: none; margin-top: 20px;">
       <div class="neo-card-header" style="margin-bottom: 10px; padding-bottom: 10px;"> 
         <h4>Статистика для <span id="selectedUserName" style="color: var(--primary-color);">N/A</span></h4>
@@ -148,7 +141,7 @@
           <thead><tr><th>Пользователь</th><th>Файлов</th></tr></thead>
           <tbody>
           {% for user, count in stats.top_users_in_range %}
-            <tr><td>{{ user }}</td><td>{{ count }}</td></tr>
+            <tr><td><a href="#" class="user-link neo-link" data-user-id="{{ user }}">{{ user }}</a></td><td>{{ count }}</td></tr>
           {% else %}
             <tr><td colspan="2">Нет данных для выбранного периода.</td></tr>
           {% endfor %}
@@ -186,26 +179,29 @@
 /* ---------------- ДАННЫЕ с сервера ---------------- */
 const dailyStats = {{ stats.daily | tojson }};
 const dailyUserStats = {{ stats.daily_user_counts | tojson }};
+const dailyNewUserStats = {{ stats.new_unique_users_per_day | default('[]') | tojson }};
 const hourlyDistribution = {{ stats.hourly_distribution | tojson }};
 const dayOfWeekDistribution = {{ stats.day_of_week_distribution | tojson }};
-const allUserActivityList = {{ stats.all_user_activity_list | default('[]') | tojson }};
+// const allUserActivityList = {{ stats.all_user_activity_list | default('[]') | tojson }}; // No longer needed for dropdown
 const currentStartDate = "{{ current_start_date if current_start_date else '' }}";
 const currentEndDate = "{{ current_end_date if current_end_date else '' }}";
 const chartFont = "'Inter', sans-serif";
 const primaryColor = '#3b82f6'; // Blue
 const secondaryColor = '#ef4444'; // Red
+const tertiaryColor = '#10b981'; // Green for new users
 const textColor = '#374151'; // Dark gray for text
 const gridColor = 'rgba(209, 213, 219, 0.5)'; // Light gray for grids
 const chartTitleColor = '#1f2937'; // Even darker for titles
 
 /* --------------- График Динамика за выбранный период --------------- */
 let currentChart;
-function renderChart(dailyData, dailyUserData, titleText = 'Динамика загрузок') {
+function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Динамика загрузок') {
   if (currentChart) currentChart.destroy();
   
   const labels = dailyData.map(item => item[0]);
   const filesData = dailyData.map(item => item[1]);
   const usersData = dailyUserData.map(item => item[1]);
+  const newUsersData = dailyNewUserData.map(item => item[1]);
 
   const datasets = [
     {
@@ -227,7 +223,7 @@ function renderChart(dailyData, dailyUserData, titleText = 'Динамика з�
 
   if (usersData && usersData.length > 0 && usersData.some(u => u > 0)) {
     datasets.push({
-      label: 'Пользователи',
+      label: 'Активные пользователи', // Changed label for clarity
       data: usersData,
       borderColor: secondaryColor,
       backgroundColor: 'rgba(239,68,68,0.1)', 
@@ -242,6 +238,26 @@ function renderChart(dailyData, dailyUserData, titleText = 'Динамика з�
       pointRadius: 5
     });
   }
+
+  if (newUsersData && newUsersData.length > 0 && newUsersData.some(u => u > 0)) {
+    datasets.push({
+      label: 'Новые пользователи',
+      data: newUsersData,
+      borderColor: tertiaryColor, 
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: tertiaryColor,
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: tertiaryColor,
+      pointHoverRadius: 7,
+      pointHoverBorderWidth: 2,
+      pointRadius: 5,
+      yAxisID: 'y' // Ensure it uses the primary y-axis if not specified otherwise
+    });
+  }
+
 
   currentChart = new Chart(document.getElementById('dynamicChart'), {
     type: 'line',
@@ -278,6 +294,8 @@ function renderChart(dailyData, dailyUserData, titleText = 'Динамика з�
         },
         y: { 
             beginAtZero: true,
+            type: 'linear', // Primary y-axis
+            position: 'left',
             ticks: { font: { family: chartFont, size: 12 }, color: textColor, padding: 10 },
             grid: { color: gridColor, drawBorder: false }
         }
@@ -293,7 +311,7 @@ function renderChart(dailyData, dailyUserData, titleText = 'Динамика з�
   });
 }
 
-renderChart(dailyStats, dailyUserStats, 
+renderChart(dailyStats, dailyUserStats, dailyNewUserStats, 
     `Динамика с ${currentStartDate || 'начала'} по ${currentEndDate || 'конец'}`);
 
 /* --------------- Hourly Activity Chart --------------- */
@@ -380,23 +398,21 @@ function renderDayOfWeekActivityChart() {
 if (document.getElementById('hourlyActivityChart')) renderHourlyActivityChart();
 if (document.getElementById('dayOfWeekActivityChart')) renderDayOfWeekActivityChart();
 
-/* ----------- Populate User Selector ----------- */
-const userSelect = document.getElementById('userStatsSelect');
-if (userSelect && typeof allUserActivityList !== 'undefined' && allUserActivityList && allUserActivityList.length > 0) {
-    allUserActivityList.forEach(userData => { // userData is [userId, count]
-        // userData[0] is user_id, userData[1] is count
-        const option = new Option(`${userData[0]} (${userData[1]} files)`, userData[0]);
-        userSelect.add(option);
-    });
-} else if (userSelect) { // Handle case where allUserActivityList might be empty or undefined
-    const option = new Option('Нет данных по пользователям для этого периода', '');
-    option.disabled = true;
-    userSelect.add(option);
-    // Optionally disable the select and button if no users
-    const viewUserStatsBtn = document.getElementById('viewUserStatsBtn');
-    if (viewUserStatsBtn) viewUserStatsBtn.disabled = true;
-    userSelect.disabled = true;
-}
+/* ----------- Populate User Selector (No longer needed) ----------- */
+// const userSelect = document.getElementById('userStatsSelect');
+// if (userSelect && typeof allUserActivityList !== 'undefined' && allUserActivityList && allUserActivityList.length > 0) {
+//     allUserActivityList.forEach(userData => { 
+//         const option = new Option(`${userData[0]} (${userData[1]} files)`, userData[0]);
+//         userSelect.add(option);
+//     });
+// } else if (userSelect) { 
+//     const option = new Option('Нет данных по пользователям для этого периода', '');
+//     option.disabled = true;
+//     userSelect.add(option);
+//     const viewUserStatsBtn = document.getElementById('viewUserStatsBtn');
+//     if (viewUserStatsBtn) viewUserStatsBtn.disabled = true;
+//     userSelect.disabled = true;
+// }
 
 /* ----------- User Specific Stats Chart Instances ----------- */
 let userDailyTrendChartInstance = null;
@@ -470,10 +486,12 @@ function renderUserDayOfWeekActivityChart(dowData) {
 }
 
 /* ----------- Fetch and Display User Stats ----------- */
-async function fetchAndDisplayUserStats() {
-    const selectedUserId = userSelect.value;
+async function fetchAndDisplayUserStats(selectedUserId) { // Now accepts userId as argument
     if (!selectedUserId) {
-        alert("Пожалуйста, выберите пользователя.");
+        // This case should ideally not be reached if triggered by user-link click
+        // but good for robustness if called from elsewhere.
+        alert("Пожалуйста, выберите пользователя."); 
+        document.getElementById('userStatsDisplayArea').style.display = 'none';
         return;
     }
 
@@ -501,6 +519,9 @@ async function fetchAndDisplayUserStats() {
         renderUserDayOfWeekActivityChart(userData.day_of_week_distribution);
 
         document.getElementById('userStatsDisplayArea').style.display = 'block';
+        // Scroll to the user stats area
+        document.getElementById('userDeepDiveCard').scrollIntoView({ behavior: 'smooth' });
+
 
     } catch (error) {
         console.error("Could not fetch user stats:", error);
@@ -509,10 +530,25 @@ async function fetchAndDisplayUserStats() {
     }
 }
 
-const viewUserStatsBtn = document.getElementById('viewUserStatsBtn');
-if (viewUserStatsBtn) {
-    viewUserStatsBtn.addEventListener('click', fetchAndDisplayUserStats);
-}
+// Remove event listener for the old button
+// const viewUserStatsBtn = document.getElementById('viewUserStatsBtn');
+// if (viewUserStatsBtn) {
+//     viewUserStatsBtn.addEventListener('click', () => {
+//         const selectedUserId = document.getElementById('userStatsSelect').value;
+//         fetchAndDisplayUserStats(selectedUserId);
+//     });
+// }
+
+/* ----------- Event Listener for Clickable User IDs in Table ----------- */
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('user-link')) {
+        event.preventDefault();
+        const userId = event.target.dataset.userId;
+        if (userId) {
+            fetchAndDisplayUserStats(userId);
+        }
+    }
+});
 
 
 /* ----------- Обработчики кнопок и фильтров дат ----------- */
@@ -541,7 +577,7 @@ function setDatesAndApply(daysAgoStart, daysAgoEnd = 0) {
 }
 
 document.getElementById('btnLast7Days').addEventListener('click', () => setDatesAndApply(6));
-document.getElementById('btnLast30Days').addEventListener('click', () => setDatesAndApply(29));
+document.getElementById('btnLast14Days').addEventListener('click', () => setDatesAndApply(13)); 
 
 document.getElementById('btnThisMonth').addEventListener('click', () => {
     const today = new Date();
@@ -675,26 +711,30 @@ setInterval(()=>{
   --text-color: #374151; 
   --text-light: #6b7280; 
   --primary-color: #3b82f6; 
-  --primary-darker: #2563eb;
+  --primary-darker: #2563eb; /* For active/pressed states */
   --shadow-light: #ffffff;
-  --shadow-dark: #d1d9e6; /* Adjusted for base-bg */
-  --neo-radius: 20px; 
-  --neo-padding: 25px; 
+  --shadow-dark: #d1d5db; /* Slightly softer dark shadow */
+  --neo-radius: 18px; /* Slightly reduced for a tighter look */
+  --neo-padding: 20px; /* Slightly reduced padding */
   --chart-title-color: #1f2937;
+  --shadow-offset: 6px; /* Main offset for extruded elements */
+  --shadow-blur: 12px; /* Main blur for extruded elements */
+  --inset-shadow-offset: 4px;
+  --inset-shadow-blur: 8px;
 }
 
 .user-select-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 15px 20px;
-  align-items: flex-end; /* Aligns button with the bottom of the select input */
+  align-items: flex-end; 
   margin-bottom: 20px;
 }
-.user-select-controls .filter-group { /* Re-use filter-group for consistency */
-    margin-bottom: 0; /* Remove bottom margin if not needed here */
+.user-select-controls .filter-group { 
+    margin-bottom: 0; 
 }
-.user-select-controls .neo-input { /* Select element */
-    min-width: 250px; /* Ensure select is wide enough */
+.user-select-controls .neo-input { 
+    min-width: 250px; 
 }
 
 .user-kpi {
@@ -709,10 +749,9 @@ setInterval(()=>{
 }
 .user-charts-grid {
   display: grid;
-  grid-template-columns: 1fr; /* Default to 1 column */
+  grid-template-columns: 1fr; 
   gap: var(--neo-padding);
 }
-/* User chart canvases */
 #userDailyTrendChart, #userHourlyActivityChart, #userDayOfWeekActivityChart {
     width: 100% !important;
     height: 100% !important;
@@ -727,15 +766,15 @@ setInterval(()=>{
 }
 .neo-card-header h4 {
   margin: 0;
-  font-size: 1.2em; /* Slightly smaller than neo-card-title */
+  font-size: 1.2em; 
   font-weight: 600;
   color: var(--chart-title-color);
 }
 .neo-card-body {
-  /* General body styles, specific chart height handled by chart-body-fixed-height */
+  /* General body styles */
 }
 .chart-body-fixed-height {
-  height: 320px; /* Adjust as needed for bar charts */
+  height: 320px; 
 }
 
 
@@ -778,9 +817,9 @@ body {
   background-color: var(--base-bg);
   border-radius: var(--neo-radius);
   padding: var(--neo-padding);
-  box-shadow: 9px 9px 18px var(--shadow-dark), 
-              -9px -9px 18px var(--shadow-light);
-  transition: box-shadow 0.3s ease;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) var(--shadow-dark), 
+              calc(-1 * var(--shadow-offset)) calc(-1 * var(--shadow-offset)) var(--shadow-blur) var(--shadow-light);
+  transition: box-shadow 0.25s ease-in-out;
 }
 .neo-card-title {
   font-size: 1.4em;
@@ -790,7 +829,6 @@ body {
   text-align: center;
 }
 
-/* KPI Grid */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -801,11 +839,11 @@ body {
   padding: 20px; 
   background-color: var(--base-bg); 
   border-radius: 15px; 
-   box-shadow: inset 6px 6px 12px var(--shadow-dark), 
-              inset -6px -6px 12px var(--shadow-light);
+   box-shadow: inset var(--inset-shadow-offset) var(--inset-shadow-offset) var(--inset-shadow-blur) var(--shadow-dark), 
+              inset calc(-1 * var(--inset-shadow-offset)) calc(-1 * var(--inset-shadow-offset)) var(--inset-shadow-blur) var(--shadow-light);
 }
 .kpi-item h2 {
-  font-size: 1.05em; /* Slightly smaller */
+  font-size: 1.05em; 
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-light);
@@ -819,19 +857,18 @@ body {
   margin: 0;
 }
 
-/* Date Filters Section */
 .date-filters .filter-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px 20px; /* row-gap column-gap */
+  gap: 15px 20px; 
   align-items: flex-end;
   justify-content: center;
 }
 .filter-group {
   display: flex;
   flex-direction: column;
-  flex-grow: 1; /* Allow groups to grow */
-  min-width: 180px; /* Minimum width for input groups */
+  flex-grow: 1; 
+  min-width: 180px; 
 }
 .filter-group label {
   font-size: 0.85em;
@@ -844,7 +881,7 @@ body {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  padding-top: 22px; /* Align with labels better */
+  padding-top: 22px; 
 }
 
 .neo-input {
@@ -855,16 +892,16 @@ body {
   font-size: 1em;
   font-family: 'Inter', sans-serif;
   color: var(--text-color);
-  box-shadow: inset 5px 5px 10px var(--shadow-dark), 
-              inset -5px -5px 10px var(--shadow-light);
-  transition: box-shadow 0.3s ease;
+  box-shadow: inset var(--inset-shadow-offset) var(--inset-shadow-offset) var(--inset-shadow-blur) var(--shadow-dark), 
+              inset calc(-1 * var(--inset-shadow-offset)) calc(-1 * var(--inset-shadow-offset)) var(--inset-shadow-blur) var(--shadow-light);
+  transition: box-shadow 0.25s ease-in-out;
   outline: none;
-  width: 100%; /* Make input take full width of its group */
+  width: 100%; 
   box-sizing: border-box;
 }
 .neo-input:focus {
-  box-shadow: inset 7px 7px 14px var(--shadow-dark), 
-              inset -7px -7px 14px var(--shadow-light),
+  box-shadow: inset calc(var(--inset-shadow-offset) + 2px) calc(var(--inset-shadow-offset) + 2px) calc(var(--inset-shadow-blur) + 4px) var(--shadow-dark), 
+              inset calc(-1 * (var(--inset-shadow-offset) + 2px)) calc(-1 * (var(--inset-shadow-offset) + 2px)) calc(var(--inset-shadow-blur) + 4px) var(--shadow-light),
               0 0 0 2px var(--primary-color); 
 }
 
@@ -873,66 +910,65 @@ body {
   color: var(--text-color);
   border: none;
   border-radius: 10px;
-  padding: 11px 18px; /* Slightly adjusted padding */
+  padding: 11px 18px; 
   font-size: 0.9em;
-  font-weight: 600; /* Bolder text */
+  font-weight: 600; 
   cursor: pointer;
-  box-shadow: 6px 6px 12px var(--shadow-dark), 
-              -6px -6px 12px var(--shadow-light);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) var(--shadow-dark), 
+              calc(-1 * var(--shadow-offset)) calc(-1 * var(--shadow-offset)) var(--shadow-blur) var(--shadow-light);
   transition: all 0.15s ease-in-out;
   text-decoration: none; 
   display: inline-block; 
 }
 .neo-button:hover {
   color: var(--primary-color);
-  box-shadow: 8px 8px 16px var(--shadow-dark), 
-              -8px -8px 16px var(--shadow-light);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) calc(var(--shadow-blur) + 4px) var(--shadow-dark), 
+              calc(-1 * (var(--shadow-offset) + 2px)) calc(-1 * (var(--shadow-offset) + 2px)) calc(var(--shadow-blur) + 4px) var(--shadow-light);
 }
 .neo-button:active {
-  box-shadow: inset 6px 6px 12px var(--shadow-dark), 
-              inset -6px -6px 12px var(--shadow-light);
+  box-shadow: inset var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) var(--shadow-dark), 
+              inset calc(-1 * var(--shadow-offset)) calc(-1 * var(--shadow-offset)) var(--shadow-blur) var(--shadow-light);
   color: var(--primary-darker);
-  font-weight: 600;
 }
 .neo-button.export-button { 
     background-color: #28a745; 
     color: white;
-    box-shadow: 6px 6px 12px #1e7e34, -6px -6px 12px #32d056; /* Green shadows */
+    box-shadow: var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) #1e7e34, 
+                calc(-1 * var(--shadow-offset)) calc(-1 * var(--shadow-offset)) var(--shadow-blur) #32d056;
 }
 .neo-button.export-button:hover {
     background-color: #218838; 
     color: white;
-    box-shadow: 8px 8px 16px #1e7e34, -8px -8px 16px #32d056;
+    box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) calc(var(--shadow-blur) + 4px) #1e7e34, 
+                calc(-1 * (var(--shadow-offset) + 2px)) calc(-1 * (var(--shadow-offset) + 2px)) calc(var(--shadow-blur) + 4px) #32d056;
 }
 .neo-button.export-button:active {
-    box-shadow: inset 6px 6px 12px #1c6c2e, inset -6px -6px 12px #2db94d;
+    box-shadow: inset var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) #1c6c2e, 
+                inset calc(-1 * var(--shadow-offset)) calc(-1 * var(--shadow-offset)) var(--shadow-blur) #2db94d;
     color: #e0e0e0;
 }
 
 
-/* Chart Container */
-.chart-container { /* For the main line chart */
+.chart-container { 
   height: 480px; 
   padding: var(--neo-padding);
 }
-#dynamicChart { /* Main line chart canvas */
+#dynamicChart { 
   width: 100% !important;
   height: 100% !important;
 }
 
-/* Activity Patterns Grid (for new bar charts) */
 .activity-patterns-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--neo-padding);
 }
-#hourlyActivityChart, #dayOfWeekActivityChart { /* Canvases for new bar charts */
+#hourlyActivityChart, #dayOfWeekActivityChart { 
   width: 100% !important;
   height: 100% !important;
 }
 
 
-/* Tables Grid */
 .tables-grid {
   display: grid;
   grid-template-columns: 1fr 1fr; 
@@ -943,17 +979,17 @@ body {
   border-radius: 15px; 
   padding: 10px; 
   background-color: var(--base-bg);
-  box-shadow: inset 5px 5px 10px var(--shadow-dark), 
-              inset -5px -5px 10px var(--shadow-light);
+  box-shadow: inset var(--inset-shadow-offset) var(--inset-shadow-offset) var(--inset-shadow-blur) var(--shadow-dark), 
+              inset calc(-1 * var(--inset-shadow-offset)) calc(-1 * var(--inset-shadow-offset)) var(--inset-shadow-blur) var(--shadow-light);
 }
 .neo-table {
   width: 100%;
-  border-collapse: separate; /* Changed for rounded corners on cells if needed */
+  border-collapse: separate; 
   border-spacing: 0;
   font-size: 0.9em;
 }
 .neo-table th, .neo-table td {
-  padding: 14px 16px; /* Increased padding */
+  padding: 14px 16px; 
   text-align: left;
   border-bottom: 1px solid var(--shadow-dark); 
 }
@@ -961,23 +997,23 @@ body {
 .neo-table th:last-child, .neo-table td:last-child { padding-right: 20px; }
 
 .neo-table thead tr {
-    background-color: transparent; /* Remove any background */
+    background-color: transparent; 
 }
 .neo-table th {
   font-weight: 600;
   color: var(--text-light);
   text-align: center;
-  border-bottom-width: 2px; /* Thicker bottom border for header */
+  border-bottom-width: 2px; 
 }
 .neo-table td {
   text-align: center;
   color: var(--text-color);
 }
 .neo-table tbody tr:last-child td {
-    border-bottom: none; /* Remove border for last row */
+    border-bottom: none; 
 }
 .neo-table tbody tr:hover {
-  background-color: rgba(0,0,0,0.015); 
+  background-color: rgba(222, 227, 233, 0.5); /* Slightly darker than base for hover */
 }
 .neo-link {
   color: var(--primary-color);
@@ -989,17 +1025,15 @@ body {
   text-decoration: underline;
 }
 
-/* Footer */
 .dashboard-footer {
   text-align: center;
   padding-top: 20px;
 }
 
 
-/* Modal Styling */
 .modal-backdrop.show {
-    background-color: rgba(0,0,0,0.1); /* Lighter backdrop */
-    backdrop-filter: blur(3px);
+    background-color: rgba(0,0,0,0.05); /* Very subtle backdrop */
+    backdrop-filter: blur(2px); /* Softer blur */
     opacity: 1;
 }
 .modal-dialog { 
@@ -1009,8 +1043,8 @@ body {
   background-color: var(--base-bg);
   border-radius: var(--neo-radius);
   padding: var(--neo-padding);
-  box-shadow: 10px 10px 25px var(--shadow-dark), 
-              -10px -10px 25px var(--shadow-light);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) var(--shadow-dark), 
+              calc(-1 * var(--shadow-offset)) calc(-1 * var(--shadow-offset)) var(--shadow-blur) var(--shadow-light);
   border: none; 
   text-align:center;
 }
@@ -1042,7 +1076,7 @@ body {
 .neo-close-button:hover {
   opacity: 1;
   color: var(--primary-color);
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(222, 227, 233, 0.7); /* Light hover effect */
 }
 .modal-body-neo {
   padding: 0; 
@@ -1062,7 +1096,7 @@ body {
 }
 
 @media (max-width: 992px) {
-  .user-charts-grid, /* Stack user charts on medium screens too */
+  .user-charts-grid, 
   .activity-patterns-grid,
   .tables-grid {
     grid-template-columns: 1fr; 
@@ -1076,7 +1110,7 @@ body {
     padding-top: 10px;
   }
    .filter-buttons .neo-button {
-    flex-grow: 1; /* Allow buttons to grow */
+    flex-grow: 1; 
   }
   .dashboard-header h1 {
     font-size: 1.9em;
@@ -1087,18 +1121,22 @@ body {
   body { padding: 15px; }
   .dashboard-container { gap: 20px; }
   :root {
-    --neo-radius: 18px;
-    --neo-padding: 20px;
+    --neo-radius: 16px; /* Slightly smaller overall */
+    --neo-padding: 18px;
+    --shadow-offset: 5px; 
+    --shadow-blur: 10px; 
+    --inset-shadow-offset: 3px;
+    --inset-shadow-blur: 6px;
   }
   .neo-card-title { font-size: 1.25em; }
   .kpi-item p { font-size: 1.8em; }
   .neo-button, .neo-input { padding: 12px 16px; font-size: 0.9em;}
   
   .filter-buttons {
-     flex-direction: row; /* Keep them in a row but allow wrapping */
+     flex-direction: row; 
   }
    .filter-buttons .neo-button {
-      flex-basis: calc(50% - 5px); /* Two buttons per row approx */
+      flex-basis: calc(50% - 5px); 
   }
 
   .modal-dialog {
@@ -1116,24 +1154,28 @@ body {
 @media (max-width: 480px) {
     .dashboard-header h1 { font-size: 1.4em; }
     :root {
-        --neo-radius: 15px;
+        --neo-radius: 12px;
         --neo-padding: 15px;
+        --shadow-offset: 4px; 
+        --shadow-blur: 8px; 
+        --inset-shadow-offset: 2px;
+        --inset-shadow-blur: 4px;
     }
     .kpi-grid {
-        grid-template-columns: 1fr; /* Stack KPIs */
+        grid-template-columns: 1fr; 
     }
     .filter-buttons .neo-button {
-      flex-basis: 100%; /* Stack all filter buttons */
+      flex-basis: 100%; 
     }
     .neo-table { font-size: 0.85em; }
     .neo-table th, .neo-table td { padding: 10px 12px; }
     .chart-container { height: 350px; }
     .chart-body-fixed-height { height: 280px; } 
-    .user-charts-grid .chart-body-fixed-height { height: 260px; } /* Slightly smaller for user charts */
+    .user-charts-grid .chart-body-fixed-height { height: 260px; } 
     .modal-body-neo { height: 280px; }
 }
 
-@media (min-width: 993px) { /* On larger screens, user charts in 3 columns */
+@media (min-width: 993px) { 
     .user-charts-grid {
         grid-template-columns: repeat(3, 1fr);
     }
