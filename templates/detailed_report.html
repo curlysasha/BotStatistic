@@ -9,12 +9,25 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="theme-light" data-design-system="default"> <!-- Default theme and design system -->
 <div class="dashboard-container">
 
   <header class="dashboard-header">
     <h1>Расширенная статистика файлов</h1>
-    <p class="server-time">🕒 Время сервера: <strong id="srvTime">{{ server_time }}</strong></p>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 10px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center;">
+            <label for="designSystemSelect" style="color: var(--text-primary); margin-right: 8px; font-size: 0.9em;">Design:</label>
+            <select id="designSystemSelect" class="neo-input" style="padding: 6px 10px; font-size: 0.9em; min-width: 120px;">
+                <option value="default">Default</option>
+                <option value="material">Material</option>
+                <option value="fluent">Fluent</option>
+            </select>
+        </div>
+        <button id="themeSwitcherBtn" class="neo-button" style="padding: 6px 10px; font-size: 1.2em;">
+            🌙
+        </button>
+    </div>
+    <p class="server-time" style="margin-top: 15px;">🕒 Время сервера: <strong id="srvTime">{{ server_time }}</strong></p>
   </header>
 
   <section class="neo-card kpi-grid">
@@ -58,7 +71,6 @@
   </section>
 
   <section class="neo-card chart-container">
-    <!-- Title will be set by Chart.js options -->
     <canvas id="dynamicChart"></canvas>
   </section>
 
@@ -83,10 +95,9 @@
 
   <section class="neo-card" id="userDeepDiveCard">
     <h3 class="neo-card-title">🔍 Статистика по пользователю (выберите из таблицы "Топ пользователей")</h3>
-    <!-- User selection controls removed -->
     <div id="userStatsDisplayArea" style="display: none; margin-top: 20px;">
       <div class="neo-card-header" style="margin-bottom: 10px; padding-bottom: 10px;"> 
-        <h4>Статистика для <span id="selectedUserName" style="color: var(--primary-color-accent);">N/A</span></h4>
+        <h4>Статистика для <span id="selectedUserName" style="color: var(--primary-accent);">N/A</span></h4>
       </div>
       <p class="user-kpi">Всего файлов за выбранный период: <strong id="userTotalFiles">0</strong></p>
       
@@ -182,20 +193,38 @@ const dailyUserStats = {{ stats.daily_user_counts | tojson }};
 const dailyNewUserStats = {{ stats.new_unique_users_per_day | default('[]') | tojson }};
 const hourlyDistribution = {{ stats.hourly_distribution | tojson }};
 const dayOfWeekDistribution = {{ stats.day_of_week_distribution | tojson }};
-// const allUserActivityList = {{ stats.all_user_activity_list | default('[]') | tojson }}; // No longer needed
 const currentStartDate = "{{ current_start_date if current_start_date else '' }}";
 const currentEndDate = "{{ current_end_date if current_end_date else '' }}";
 const chartFont = "'Inter', sans-serif";
 
-const primaryColorAccent = '#007bff'; 
-const secondaryColorAccent = '#dc3545'; 
-const tertiaryColorAccent = '#28a745'; 
+// Function to get CSS variable values
+function getCssVar(varName) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    if (value.includes(',')) { 
+        return value;
+    }
+    return value;
+}
 
-const panelTextColor = '#1f2937'; 
-const bodyTextColorGlobal = '#212529'; 
-const chartGridColorGlobal = 'rgba(0, 0, 0, 0.1)'; 
-const chartTickColorGlobal = '#555b66'; 
-const chartTitleColorGlobal = '#1f2937'; 
+
+// Chart.js Global Defaults
+Chart.defaults.font.family = chartFont;
+
+// Dynamically set chart colors from CSS variables
+let primaryColorAccent, secondaryColorAccent, tertiaryColorAccent, 
+    panelTextColor, chartGridColor, chartTitleColor, chartTickColor, 
+    chartGridColorOnPanel;
+
+function updateChartColorVariables() {
+    primaryColorAccent = getCssVar('--primary-accent');
+    secondaryColorAccent = getCssVar('--secondary-accent');
+    tertiaryColorAccent = getCssVar('--tertiary-accent');
+    panelTextColor = getCssVar('--text-color-on-panel'); 
+    chartGridColor = getCssVar('--chart-grid-color'); 
+    chartTitleColor = getCssVar('--chart-title-color'); 
+    chartTickColor = getCssVar('--chart-tick-color'); 
+    chartGridColorOnPanel = getCssVar('--chart-grid-color-on-panel');
+}
 
 /* --------------- График Динамика за выбранный период --------------- */
 let currentChart;
@@ -209,72 +238,46 @@ function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Д
 
   const datasets = [
     {
-      label: 'Файлы',
-      data: filesData,
-      borderColor: primaryColorAccent,
-      backgroundColor: 'rgba(0, 123, 255, 0.2)', 
-      tension: 0.4, 
-      fill: true,
-      pointBackgroundColor: primaryColorAccent,
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: primaryColorAccent,
-      pointHoverRadius: 7,
-      pointHoverBorderWidth: 2,
-      pointRadius: 5
+      label: 'Файлы', data: filesData,
+      borderColor: primaryColorAccent, backgroundColor: `rgba(${getCssVar('--primary-accent-rgb')}, 0.2)`, 
+      tension: 0.4, fill: true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff', pointHoverBorderColor: primaryColorAccent,
+      pointHoverRadius: 7, pointHoverBorderWidth: 2, pointRadius: 5
     }
   ];
 
   if (usersData && usersData.length > 0 && usersData.some(u => u > 0)) {
     datasets.push({
-      label: 'Активные пользователи', 
-      data: usersData,
-      borderColor: secondaryColorAccent,
-      backgroundColor: 'rgba(220, 53, 69, 0.2)', 
-      tension: 0.4,
-      fill: true,
-      pointBackgroundColor: secondaryColorAccent,
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: secondaryColorAccent,
-      pointHoverRadius: 7,
-      pointHoverBorderWidth: 2,
-      pointRadius: 5
+      label: 'Активные пользователи', data: usersData,
+      borderColor: secondaryColorAccent, backgroundColor: `rgba(${getCssVar('--secondary-accent-rgb')}, 0.2)`, 
+      tension: 0.4, fill: true, pointBackgroundColor: secondaryColorAccent, pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff', pointHoverBorderColor: secondaryColorAccent,
+      pointHoverRadius: 7, pointHoverBorderWidth: 2, pointRadius: 5
     });
   }
 
   if (newUsersData && newUsersData.length > 0 && newUsersData.some(u => u > 0)) {
     datasets.push({
-      label: 'Новые пользователи',
-      data: newUsersData,
-      borderColor: tertiaryColorAccent, 
-      backgroundColor: 'rgba(40, 167, 69, 0.2)',
-      tension: 0.4,
-      fill: true,
-      pointBackgroundColor: tertiaryColorAccent,
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: tertiaryColorAccent,
-      pointHoverRadius: 7,
-      pointHoverBorderWidth: 2,
-      pointRadius: 5,
-      yAxisID: 'y' 
+      label: 'Новые пользователи', data: newUsersData,
+      borderColor: tertiaryColorAccent, backgroundColor: `rgba(${getCssVar('--tertiary-accent-rgb')}, 0.2)`,
+      tension: 0.4, fill: true, pointBackgroundColor: tertiaryColorAccent, pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff', pointHoverBorderColor: tertiaryColorAccent,
+      pointHoverRadius: 7, pointHoverBorderWidth: 2, pointRadius: 5, yAxisID: 'y' 
     });
   }
 
   currentChart = new Chart(document.getElementById('dynamicChart'), {
-    type: 'line',
-    data: { labels: labels, datasets: datasets },
+    type: 'line', data: { labels: labels, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        title: { display: true, text: titleText, font: { size: 18, family: chartFont, weight: '600' }, color: chartTitleColorGlobal, padding: { top:10, bottom: 20 } },
-        legend: { position: 'bottom', labels: { font: { family: chartFont, size: 14 }, color: chartTickColorGlobal, usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 8 } },
+        title: { display: true, text: titleText, font: { size: 18, family: chartFont, weight: '600' }, color: chartTitleColor, padding: { top:10, bottom: 20 } },
+        legend: { position: 'bottom', labels: { font: { family: chartFont, size: 14 }, color: chartTickColor, usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 8 } },
         tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { family: chartFont, size: 14, weight: '600' }, bodyFont: { family: chartFont, size: 12 }, padding: 12, cornerRadius: 8, displayColors: true, boxPadding: 4 }
       },
       scales: {
-        x: { ticks: { font: { family: chartFont, size: 12 }, color: chartTickColorGlobal }, grid: { display: false } },
-        y: { type: 'linear', position: 'left', ticks: { font: { family: chartFont, size: 12 }, color: chartTickColorGlobal, padding: 10 }, grid: { color: chartGridColorGlobal, drawBorder: false }, beginAtZero: true }
+        x: { ticks: { font: { family: chartFont, size: 12 }, color: chartTickColor }, grid: { display: false } },
+        y: { type: 'linear', position: 'left', ticks: { font: { family: chartFont, size: 12 }, color: chartTickColor }, grid: { color: chartGridColor, drawBorder: false }, beginAtZero: true }
       },
       layout: { padding: { left: 0, right: 10, top: 0, bottom: 0 } },
       interaction: { intersect: false, mode: 'index' }
@@ -282,52 +285,51 @@ function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Д
   });
 }
 
-renderChart(dailyStats, dailyUserStats, dailyNewUserStats, `Динамика с ${currentStartDate || 'начала'} по ${currentEndDate || 'конец'}`);
-
 /* --------------- Hourly Activity Chart --------------- */
+let hourlyActivityChartInstance = null;
 function renderHourlyActivityChart() {
+  if(hourlyActivityChartInstance) hourlyActivityChartInstance.destroy();
   const hourlyLabels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
-  new Chart(document.getElementById('hourlyActivityChart'), {
+  hourlyActivityChartInstance = new Chart(document.getElementById('hourlyActivityChart'), {
     type: 'bar',
     data: {
       labels: hourlyLabels,
       datasets: [{
         label: 'Файлов в час', data: hourlyDistribution,
-        backgroundColor: 'rgba(0, 123, 255, 0.6)', borderColor: primaryColorAccent,
-        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: 'rgba(0, 123, 255, 0.8)'
+        backgroundColor: `rgba(${getCssVar('--primary-accent-rgb')}, 0.6)`, borderColor: primaryColorAccent,
+        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: `rgba(${getCssVar('--primary-accent-rgb')}, 0.8)`
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleFont: { family: chartFont, size: 13, weight: '600' }, bodyFont: { family: chartFont, size: 11 }, padding: 10, cornerRadius: 6, displayColors: false } },
-      scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } }
+      scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: chartGridColorOnPanel, drawBorder: false } } }
     }
   });
 }
 
 /* --------------- Day-of-Week Activity Chart --------------- */
+let dayOfWeekActivityChartInstance = null;
 function renderDayOfWeekActivityChart() {
+  if(dayOfWeekActivityChartInstance) dayOfWeekActivityChartInstance.destroy();
   const dowLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-  new Chart(document.getElementById('dayOfWeekActivityChart'), {
+  dayOfWeekActivityChartInstance = new Chart(document.getElementById('dayOfWeekActivityChart'), {
     type: 'bar',
     data: {
       labels: dowLabels,
       datasets: [{
         label: 'Файлов за день недели', data: dayOfWeekDistribution,
-        backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: secondaryColorAccent,
-        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: 'rgba(220, 53, 69, 0.8)'
+        backgroundColor: `rgba(${getCssVar('--secondary-accent-rgb')}, 0.6)`, borderColor: secondaryColorAccent,
+        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: `rgba(${getCssVar('--secondary-accent-rgb')}, 0.8)`
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleFont: { family: chartFont, size: 13, weight: '600' }, bodyFont: { family: chartFont, size: 11 }, padding: 10, cornerRadius: 6, displayColors: false } },
-      scales: { x: { ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } }
+      scales: { x: { ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: chartGridColorOnPanel, drawBorder: false } } }
     }
   });
 }
-
-if (document.getElementById('hourlyActivityChart')) renderHourlyActivityChart();
-if (document.getElementById('dayOfWeekActivityChart')) renderDayOfWeekActivityChart();
 
 /* ----------- User Specific Stats Chart Instances ----------- */
 let userDailyTrendChartInstance = null;
@@ -340,8 +342,8 @@ function renderUserDailyTrendChart(dailyActivity) {
     const labels = dailyActivity.map(item => item[0]);
     const data = dailyActivity.map(item => item[1]);
     userDailyTrendChartInstance = new Chart(document.getElementById('userDailyTrendChart'), {
-        type: 'line', data: { labels: labels, datasets: [{ label: 'Файлов в день', data: data, borderColor: primaryColorAccent, backgroundColor: 'rgba(0, 123, 255, 0.2)', tension: 0.4, fill: true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff' }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } } }
+        type: 'line', data: { labels: labels, datasets: [{ label: 'Файлов в день', data: data, borderColor: primaryColorAccent, backgroundColor: `rgba(${getCssVar('--primary-accent-rgb')}, 0.2)`, tension: 0.4, fill: true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: chartGridColorOnPanel, drawBorder: false } } } }
     });
 }
 
@@ -349,8 +351,8 @@ function renderUserHourlyActivityChart(hourlyData) {
     if (userHourlyActivityChartInstance) userHourlyActivityChartInstance.destroy();
     const hourlyLabels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
     userHourlyActivityChartInstance = new Chart(document.getElementById('userHourlyActivityChart'), {
-        type: 'bar', data: { labels: hourlyLabels, datasets: [{ label: 'Файлов в час', data: hourlyData, backgroundColor: 'rgba(0, 123, 255, 0.6)', borderColor: primaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } } }
+        type: 'bar', data: { labels: hourlyLabels, datasets: [{ label: 'Файлов в час', data: hourlyData, backgroundColor: `rgba(${getCssVar('--primary-accent-rgb')}, 0.6)`, borderColor: primaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: chartGridColorOnPanel, drawBorder: false } } } }
     });
 }
 
@@ -358,8 +360,8 @@ function renderUserDayOfWeekActivityChart(dowData) {
     if (userDayOfWeekActivityChartInstance) userDayOfWeekActivityChartInstance.destroy();
     const dowLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     userDayOfWeekActivityChartInstance = new Chart(document.getElementById('userDayOfWeekActivityChart'), {
-        type: 'bar', data: { labels: dowLabels, datasets: [{ label: 'Файлов за день недели', data: dowData, backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: secondaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } } }
+        type: 'bar', data: { labels: dowLabels, datasets: [{ label: 'Файлов за день недели', data: dowData, backgroundColor: `rgba(${getCssVar('--secondary-accent-rgb')}, 0.6)`, borderColor: secondaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: chartGridColorOnPanel, drawBorder: false } } } }
     });
 }
 
@@ -392,6 +394,7 @@ async function fetchAndDisplayUserStats(selectedUserId) {
     }
 }
 
+/* ----------- Event Listener for Clickable User IDs in Table ----------- */
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('user-link')) {
         event.preventDefault();
@@ -451,7 +454,7 @@ function renderDayChart(hours){
     data:{
       labels:Array.from({length:24},(_,h)=>String(h).padStart(2,'0')+':00'),
       datasets:[{
-          label:'Файлы', data:hours, borderColor: primaryColorAccent, backgroundColor: 'rgba(0, 123, 255, 0.2)',
+          label:'Файлы', data:hours, borderColor: primaryColorAccent, backgroundColor: `rgba(${getCssVar('--primary-accent-rgb')}, 0.2)`,
           tension:0.4, fill:true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff', pointHoverBorderColor: primaryColorAccent,
           pointHoverRadius: 6, pointHoverBorderWidth: 2, pointRadius: 4
@@ -465,7 +468,7 @@ function renderDayChart(hours){
             tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleFont: { family: chartFont, size: 13, weight: '600' }, bodyFont: { family: chartFont, size: 11 }, padding: 10, cornerRadius: 6, displayColors: false }
         },
         scales:{
-            y:{beginAtZero:true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.08)', drawBorder: false }}, 
+            y:{beginAtZero:true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: chartGridColorOnPanel, drawBorder: false }}, 
             x:{ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { display: false }}
         },
         interaction: { intersect: false, mode: 'index' }
@@ -489,87 +492,369 @@ document.querySelectorAll('.date-link').forEach(el=>{
 });
 document.getElementById('dayModal').addEventListener('hidden.bs.modal',()=>{ if(dayRefreshTimer){ clearInterval(dayRefreshTimer); dayRefreshTimer=null; }});
 setInterval(()=>{ fetch('/server_time').then(r=>r.json()).then(d=>{ const srvTimeEl = document.getElementById('srvTime'); if (srvTimeEl) srvTimeEl.textContent = d.now; }); },60000);
+
+/* ----------- Theme Switcher Logic ----------- */
+let currentTheme = localStorage.getItem('theme') || 'light';
+let currentDesignSystem = localStorage.getItem('designSystem') || 'default'; 
+const themeSwitcherBtn = document.getElementById('themeSwitcherBtn');
+const designSystemSelect = document.getElementById('designSystemSelect');
+
+function applyThemeAndDesign() {
+    document.body.classList.remove('theme-light', 'theme-dark');
+    document.body.classList.add(`theme-${currentTheme}`);
+    document.body.dataset.designSystem = currentDesignSystem; 
+    
+    themeSwitcherBtn.textContent = currentTheme === 'light' ? '🌙' : '☀️';
+    if(designSystemSelect) designSystemSelect.value = currentDesignSystem; // Update dropdown
+    
+    localStorage.setItem('theme', currentTheme);
+    localStorage.setItem('designSystem', currentDesignSystem);
+
+    updateChartColorVariables(); 
+
+    renderChart(dailyStats, dailyUserStats, dailyNewUserStats, `Динамика с ${currentStartDate || 'начала'} по ${currentEndDate || 'конец'}`);
+    if (document.getElementById('hourlyActivityChart')) renderHourlyActivityChart();
+    if (document.getElementById('dayOfWeekActivityChart')) renderDayOfWeekActivityChart();
+    if (document.getElementById('userStatsDisplayArea').style.display !== 'none') {
+        const selectedUserId = document.getElementById('selectedUserName').textContent;
+        if (selectedUserId && selectedUserId !== 'N/A') {
+            // Re-fetch might not be needed if only colors change, but for safety:
+            fetchAndDisplayUserStats(selectedUserId); 
+        }
+    }
+    if (dayChartInstance && document.getElementById('dayModal').classList.contains('show')) {
+        const modalDate = document.getElementById('modalDate').textContent;
+        if (modalDate) {
+             fetch('/day/'+modalDate).then(r=>r.json()).then(d=> {
+                if(!d.error) renderDayChart(d.hourly); // Re-render modal chart with new colors
+             });
+        }
+    }
+}
+
+themeSwitcherBtn.addEventListener('click', () => {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyThemeAndDesign();
+});
+
+if(designSystemSelect) {
+    designSystemSelect.addEventListener('change', (event) => {
+        currentDesignSystem = event.target.value;
+        applyThemeAndDesign();
+    });
+}
+
+// Apply saved theme and design system on initial load
+document.addEventListener('DOMContentLoaded', () => {
+    currentTheme = localStorage.getItem('theme') || 'light';
+    currentDesignSystem = localStorage.getItem('designSystem') || 'default';
+    
+    if(designSystemSelect) designSystemSelect.value = currentDesignSystem; // Set dropdown on load
+    
+    applyThemeAndDesign(); 
+});
+
 </script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* @keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-} */
-
 :root {
-  /* Light Theme Palette */
-  --panel-bg: #FFFFFF; 
-  --panel-border-color: #dee2e6; /* Softer border for panels */
-  --panel-shadow: 0px 5px 15px rgba(0, 0, 0, 0.08); /* Softer, more diffused shadow */
-  
-  --text-color-on-light-bg: #212529; 
-  --text-color-on-panel: #343a40;  /* Primary text on panels */
-  --text-light-on-panel: #6c757d; /* Secondary text on panels */
-  
-  --primary-color-accent: #007bff; 
-  --primary-color-accent-darker: #0056b3; /* For hover/active */
-  --secondary-color-accent: #dc3545; 
-  --tertiary-color-accent: #28a745; 
-  --btn-secondary-bg: #f8f9fa;
-  --btn-secondary-border: #ced4da;
-  --btn-secondary-hover-bg: #e2e6ea;
-  --btn-secondary-hover-border: #adb5bd;
+  /* Default Light Theme (Based on previous light theme) */
+  --page-bg: #F8F9FA;
+  --panel-bg: #FFFFFF;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-on-accent: #FFFFFF;
 
+  --primary-accent: #007bff;
+  --primary-accent-darker: #0056b3;
+  --primary-accent-rgb: 0,123,255;
+  --secondary-accent: #dc3545;
+  --secondary-accent-rgb: 220,53,69;
+  --tertiary-accent: #28a745;
+  --tertiary-accent-rgb: 40,167,69;
+  --export-accent: var(--tertiary-accent);
+  --export-accent-darker: #1e7e34;
 
-  /* Chart colors for light theme */
-  --chart-title-color: #343a40; 
-  --chart-tick-color: #495057; 
-  --chart-grid-color: rgba(0, 0, 0, 0.08);
+  --button-secondary-bg: #E9ECEF;
+  --button-secondary-text: var(--text-primary);
+  --button-secondary-border: #ADB5BD;
+  --button-secondary-hover-bg: #d3d9df;
+  --button-secondary-hover-border: #919ca6;
 
-  /* General Layout & Sizing */
-  --panel-radius: 10px; /* Slightly less rounded */
-  --panel-padding: 20px; 
+  --input-bg: #FFFFFF;
+  --input-text: var(--text-primary);
+  --input-border: #CED4DA;
+  --input-focus-border: var(--primary-accent);
+  --input-focus-shadow-rgb: var(--primary-accent-rgb);
+
+  --panel-shadow: 0px 4px 12px rgba(0, 0, 0, 0.06);
+  --panel-border: 1px solid #E0E0E0;
+  --panel-radius: 12px;
+  --panel-padding: 20px;
+
+  --chart-title-color: #1f2937;
+  --chart-tick-color: #555b66;
+  --chart-grid-color: rgba(0, 0, 0, 0.1);
+  --chart-grid-color-on-panel: rgba(0,0,0,0.05); 
 }
+
+body.theme-dark { /* Default Dark Theme */
+  --page-bg: #121212;
+  --panel-bg: #1e1e1e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  
+  --primary-accent: #008cff;
+  --primary-accent-darker: #006bb3;
+  --primary-accent-rgb: 0,140,255;
+  --secondary-accent: #f8516c; 
+  --secondary-accent-rgb: 248,81,108;
+  --tertiary-accent: #34d399; 
+  --tertiary-accent-rgb: 52,211,153;
+  --export-accent: var(--tertiary-accent);
+  --export-accent-darker: #239245;
+
+  --button-secondary-bg: #333333;
+  --button-secondary-text: var(--text-primary);
+  --button-secondary-border: #555555;
+  --button-secondary-hover-bg: #444444;
+  --button-secondary-hover-border: #666666;
+
+  --input-bg: #2c2c2c;
+  --input-text: var(--text-primary);
+  --input-border: #444444;
+  
+  --panel-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+  --panel-border: 1px solid #383838;
+
+  --chart-title-color: #e0e0e0;
+  --chart-tick-color: #aaaaaa;
+  --chart-grid-color: rgba(255, 255, 255, 0.1);
+  --chart-grid-color-on-panel: rgba(255,255,255,0.08); 
+}
+
+/* Material Design Light Theme */
+body[data-design-system="material"].theme-light {
+  --page-bg: #F5F5F5;
+  --panel-bg: #FFFFFF;
+  --text-primary: rgba(0, 0, 0, 0.87);
+  --text-secondary: rgba(0, 0, 0, 0.60);
+  --text-on-accent: #FFFFFF;
+
+  --primary-accent: #3f51b5; /* Indigo 500 */
+  --primary-accent-darker: #303f9f; /* Indigo 700 */
+  --primary-accent-rgb: 63,81,181;
+  --secondary-accent: #ff4081; /* Pink A200 */
+  --secondary-accent-rgb: 255,64,129;
+  --tertiary-accent: #009688; /* Teal 500 */
+  --tertiary-accent-rgb: 0,150,136;
+  --export-accent: var(--tertiary-accent);
+  --export-accent-darker: #00796b; /* Teal 700 */
+  
+  --button-secondary-bg: var(--panel-bg); /* For outlined/text buttons */
+  --button-secondary-text: var(--primary-accent);
+  --button-secondary-border: rgba(0, 0, 0, 0.23); /* Material outlined button border */
+  --button-secondary-hover-bg: rgba(var(--primary-accent-rgb), 0.04); /* Primary color ripple/hover */
+  --button-secondary-hover-border: rgba(0, 0, 0, 0.23);
+
+  --input-bg: rgba(0, 0, 0, 0.06); /* Filled input background */
+  --input-text: var(--text-primary);
+  --input-border: transparent; /* Filled inputs often have no side borders, just bottom */
+  --input-focus-border: var(--primary-accent); /* Bottom line color on focus */
+  --input-focus-shadow-rgb: var(--primary-accent-rgb); 
+
+  --panel-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.20); /* 2dp */
+  --panel-border: 1px solid rgba(0,0,0,0.12); 
+  --panel-radius: 4px;
+  --panel-padding: 16px;
+
+  --chart-title-color: var(--text-primary);
+  --chart-tick-color: var(--text-secondary);
+  --chart-grid-color: rgba(0, 0, 0, 0.12);
+  --chart-grid-color-on-panel: rgba(0,0,0,0.12);
+}
+
+/* Material Design Dark Theme */
+body[data-design-system="material"].theme-dark {
+  --page-bg: #121212;
+  --panel-bg: linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.05)), #121212; 
+  --text-primary: rgba(255, 255, 255, 0.87);
+  --text-secondary: rgba(255, 255, 255, 0.60);
+  --text-on-accent: #FFFFFF; 
+
+  --primary-accent: #7986cb; /* Lighter Indigo for dark */
+  --primary-accent-darker: #5c6bc0;
+  --primary-accent-rgb: 121,134,203;
+  --secondary-accent: #f06292; /* Lighter Pink */
+  --secondary-accent-rgb: 240,98,146;
+  --tertiary-accent: #4db6ac; /* Lighter Teal */
+  --tertiary-accent-rgb: 77,182,172;
+  --export-accent: var(--tertiary-accent);
+  --export-accent-darker: #26a69a;
+
+  --button-secondary-bg: transparent; /* For text/outlined buttons */
+  --button-secondary-text: var(--primary-accent);
+  --button-secondary-border: rgba(255, 255, 255, 0.23);
+  --button-secondary-hover-bg: rgba(var(--primary-accent-rgb), 0.08); /* Primary color ripple/hover */
+  --button-secondary-hover-border: rgba(255, 255, 255, 0.23);
+
+  --input-bg: rgba(255, 255, 255, 0.09);
+  --input-text: var(--text-primary);
+  --input-border: transparent;
+  --input-focus-border: var(--primary-accent);
+
+  --panel-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 2px 2px rgba(0,0,0,0.14), 0 0 2px rgba(0,0,0,0.12); /* Subtle shadow for dark */
+  --panel-border: 1px solid rgba(255, 255, 255, 0.12); 
+  --panel-radius: 4px;
+  --panel-padding: 16px;
+
+  --chart-title-color: var(--text-primary);
+  --chart-tick-color: var(--text-secondary);
+  --chart-grid-color: rgba(255, 255, 255, 0.12);
+  --chart-grid-color-on-panel: rgba(255,255,255,0.12);
+}
+
+/* Fluent Design Light Theme */
+body[data-design-system="fluent"].theme-light {
+  --page-bg: #F3F3F3; 
+  --panel-bg: rgba(252, 252, 252, 0.7); /* Acrylic-like */
+  --text-primary: #000000; 
+  --text-secondary: #333333; /* Darker secondary for Fluent light */
+  --text-on-accent: #FFFFFF;
+
+  --primary-accent: #0078D4; /* Fluent Blue */
+  --primary-accent-darker: #005A9E;
+  --primary-accent-rgb: 0,120,212;
+  --secondary-accent: #D83B01; /* Fluent Orange */
+  --secondary-accent-rgb: 216,59,1;
+  --tertiary-accent: #107C10; /* Fluent Green */
+  --tertiary-accent-rgb: 16,124,16;
+  --export-accent: var(--tertiary-accent);
+  --export-accent-darker: #0B530B;
+
+  --button-secondary-bg: rgba(0, 0, 0, 0.06); 
+  --button-secondary-text: var(--text-primary);
+  --button-secondary-border: rgba(0, 0, 0, 0.15);
+  --button-secondary-hover-bg: rgba(0, 0, 0, 0.1);
+  --button-secondary-hover-border: rgba(0, 0, 0, 0.2);
+
+  --input-bg: #FFFFFF; 
+  --input-text: var(--text-primary);
+  --input-border: #8A8A8A; /* Fluent input border */
+  --input-focus-border: var(--primary-accent);
+  --input-focus-shadow-rgb: var(--primary-accent-rgb); 
+
+  --panel-shadow: 0px 1.6px 3.6px rgba(0,0,0,0.132), 0px 0.3px 0.9px rgba(0,0,0,0.108); /* Fluent elevation */
+  --panel-border: 1px solid rgba(0, 0, 0, 0.06); 
+  --panel-radius: 6px; 
+  --panel-padding: 20px; 
+  --glass-blur: 15px; /* Fluent acrylic blur */
+
+
+  --chart-title-color: var(--text-primary);
+  --chart-tick-color: var(--text-secondary);
+  --chart-grid-color: rgba(0, 0, 0, 0.1);
+  --chart-grid-color-on-panel: rgba(0,0,0,0.1);
+}
+
+/* Fluent Design Dark Theme */
+body[data-design-system="fluent"].theme-dark {
+  --page-bg: #201F1F; /* Fluent dark background */
+  --panel-bg: rgba(45, 45, 45, 0.75); /* Dark Acrylic */
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D1D1;
+  --text-on-accent: #000000; /* Black text on bright accents for Fluent Dark */
+
+  --primary-accent: #479EF5; /* Brighter Fluent blue for dark theme */
+  --primary-accent-darker: #2A7FDE;
+  --primary-accent-rgb: 71,158,245;
+  --secondary-accent: #F07F5B; /* Lighter Fluent Orange */
+  --secondary-accent-rgb: 240,127,91;
+  --tertiary-accent: #50D650; /* Lighter Fluent Green */
+  --tertiary-accent-rgb: 80,214,80;
+  --export-accent: var(--tertiary-accent);
+  --export-accent-darker: #36B036;
+
+  --button-secondary-bg: rgba(255, 255, 255, 0.08);
+  --button-secondary-text: var(--text-primary);
+  --button-secondary-border: rgba(255, 255, 255, 0.15);
+  --button-secondary-hover-bg: rgba(255, 255, 255, 0.12);
+  --button-secondary-hover-border: rgba(255, 255, 255, 0.2);
+
+  --input-bg: #2D2D2D; 
+  --input-text: var(--text-primary);
+  --input-border: #707070;
+  --input-focus-border: var(--primary-accent);
+
+  --panel-shadow: 0px 1.6px 3.6px rgba(0,0,0,0.26), 0px 0.3px 0.9px rgba(0,0,0,0.22); 
+  --panel-border: 1px solid rgba(255, 255, 255, 0.1); 
+  --panel-radius: 6px;
+  --panel-padding: 20px;
+  --glass-blur: 15px; /* Fluent acrylic blur */
+
+  --chart-title-color: var(--text-primary);
+  --chart-tick-color: var(--text-secondary);
+  --chart-grid-color: rgba(255, 255, 255, 0.15);
+  --chart-grid-color-on-panel: rgba(255,255,255,0.15);
+}
+
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #F8F9FA; 
-  color: var(--text-color-on-light-bg); 
+  background-color: var(--page-bg); 
+  color: var(--text-primary); 
   margin: 0;
   padding: 20px; 
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .dashboard-container { display: flex; flex-direction: column; gap: 25px; max-width: 1600px; margin: auto; }
-.dashboard-header { text-align: center; padding: 10px 0; margin-bottom: 10px; }
-.dashboard-header h1 { font-size: 2.2em; font-weight: 700; color: var(--text-color-on-panel); margin-bottom: 0.2em; } 
-.server-time { font-size: 0.95em; color: var(--text-light-on-panel); opacity: 0.8; } 
+.dashboard-header { position: relative; text-align: center; padding: 10px 0; margin-bottom: 10px; }
+.dashboard-header h1 { font-size: 2.2em; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2em; } 
+.server-time { font-size: 0.95em; color: var(--text-secondary); opacity: 0.8; } 
 
 .neo-card { 
   background-color: var(--panel-bg);
   border-radius: var(--panel-radius);
   padding: var(--panel-padding);
-  border: 1px solid var(--panel-border-color);
+  border: var(--panel-border);
   box-shadow: var(--panel-shadow);
-  transition: box-shadow 0.25s ease-in-out;
+  transition: box-shadow 0.25s ease-in-out, background-color 0.3s ease, border-color 0.3s ease;
 }
-.neo-card-title { font-size: 1.4em; font-weight: 600; color: var(--text-color-on-panel); margin-bottom: 20px; text-align: center; }
+/* Apply backdrop-filter for Fluent */
+body[data-design-system="fluent"] .neo-card,
+body[data-design-system="fluent"] .modal-content-neo { 
+    backdrop-filter: blur(var(--glass-blur, 10px)); 
+    -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
+}
+
+.neo-card-title { font-size: 1.4em; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center; }
 
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--panel-padding); }
 .kpi-item {
   text-align: center; padding: 20px; 
-  background-color: var(--panel-bg); /* Match parent card */
+  background-color: var(--panel-bg); 
   border-radius: calc(var(--panel-radius) - 6px); 
-  /* No border or shadow for KPI items if they are to blend into the parent card */
 }
-.kpi-item h2 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light-on-panel); margin-bottom: 8px; font-weight: 500; }
-.kpi-item p { font-size: 2em; font-weight: 700; color: var(--primary-color-accent); margin: 0; }
+body[data-design-system="fluent"] .kpi-item {
+    background-color: rgba(255,255,255,0.1); 
+}
+body[data-design-system="fluent"].theme-dark .kpi-item {
+    background-color: rgba(50,50,50,0.5); 
+}
+
+.kpi-item h2 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+.kpi-item p { font-size: 2em; font-weight: 700; color: var(--primary-accent); margin: 0; }
 
 .date-filters .filter-controls { display: flex; flex-wrap: wrap; gap: 15px 20px; align-items: flex-end; justify-content: center; }
 .filter-group { display: flex; flex-direction: column; flex-grow: 1; min-width: 180px; }
-.filter-group label { font-size: 0.85em; color: var(--text-light-on-panel); margin-bottom: 6px; font-weight: 500; }
+.filter-group label { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
 .filter-buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-top: 22px; }
 
 .neo-input, .neo-button {
@@ -582,57 +867,57 @@ body {
 }
 .neo-input { 
   width: 100%; box-sizing: border-box; 
-  background-color: #FFFFFF;
-  border: 1px solid #CED4DA;
-  color: var(--text-color-on-panel);
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--input-text);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.075);
 }
 .neo-input:focus {
-  border-color: var(--primary-color-accent);
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); 
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 0.2rem rgba(var(--input-focus-shadow-rgb),.25); 
 }
 
 .neo-button {
   font-weight: 500; cursor: pointer;
-  background-color: var(--btn-secondary-bg);
-  border: 1px solid var(--btn-secondary-border);
-  color: var(--text-color-on-panel);
+  background-color: var(--button-secondary-bg);
+  border: 1px solid var(--button-secondary-border);
+  color: var(--button-secondary-text);
 }
 .neo-button:hover {
-  background-color: var(--btn-secondary-hover-bg);
-  border-color: var(--btn-secondary-hover-border);
+  background-color: var(--button-secondary-hover-bg);
+  border-color: var(--button-secondary-hover-border);
 }
 .neo-button:active {
-  background-color: #d3d9df; /* Slightly darker for active */
-  border-color: #a1aabb;
+  background-color: var(--button-secondary-hover-bg); /* Keep hover for active */
+  border-color: var(--button-secondary-hover-border);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .neo-button.btn-primary {
-  background-color: var(--primary-color-accent);
-  color: #FFFFFF;
-  border-color: var(--primary-color-accent);
+  background-color: var(--primary-accent);
+  color: var(--text-on-accent);
+  border-color: var(--primary-accent);
 }
 .neo-button.btn-primary:hover {
-  background-color: var(--primary-color-accent-darker);
-  border-color: var(--primary-color-accent-darker);
-  color: #FFFFFF;
+  background-color: var(--primary-accent-darker);
+  border-color: var(--primary-accent-darker);
+  color: var(--text-on-accent);
 }
 .neo-button.btn-primary:active {
-  background-color: #004a99; /* Even darker for active primary */
-  border-color: #004a99;
+  background-color: var(--primary-accent-darker); 
+  border-color: var(--primary-accent-darker);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
 }
 
 .neo-button.export-button { 
-    background-color: var(--tertiary-color-accent); 
-    border-color: #1c7430; /* Darker green for border */
-    color: white; 
+    background-color: var(--export-accent); 
+    border-color: var(--export-accent-darker);
+    color: var(--text-on-accent); 
 }
 .neo-button.export-button:hover {
-    background-color: #1f823a; /* Darker green on hover */
-    border-color: #176329;
-    color: white;
+    background-color: var(--export-accent-darker); 
+    border-color: var(--export-accent-darker);
+    color: var(--text-on-accent);
 }
 
 .chart-container { height: 480px; padding: var(--panel-padding); }
@@ -651,12 +936,12 @@ body {
 .neo-table th:first-child, .neo-table td:first-child { padding-left: 20px; }
 .neo-table th:last-child, .neo-table td:last-child { padding-right: 20px; }
 .neo-table thead tr { background-color: transparent; }
-.neo-table th { font-weight: 600; color: var(--text-light-on-panel); text-align: center; border-bottom-width: 2px; border-bottom-color: var(--panel-border-color); }
-.neo-table td { text-align: center; color: var(--text-color-on-panel); }
+.neo-table th { font-weight: 600; color: var(--text-secondary); text-align: center; border-bottom-width: 2px; border-bottom-color: var(--panel-border-color); }
+.neo-table td { text-align: center; color: var(--text-primary); }
 .neo-table tbody tr:last-child td { border-bottom: none; }
-.neo-table tbody tr:hover { background-color: #f1f3f5; } 
-.neo-link { color: var(--primary-color-accent); text-decoration: none; font-weight: 500; }
-.neo-link:hover { color: var(--primary-color-accent-darker); text-decoration: underline; } 
+.neo-table tbody tr:hover { background-color: rgba(0,0,0,0.03); } /* Subtle hover for light/dark */
+.neo-link { color: var(--primary-accent); text-decoration: none; font-weight: 500; }
+.neo-link:hover { color: var(--primary-accent-darker); text-decoration: underline; } 
 
 .dashboard-footer { text-align: center; padding-top: 20px; }
 
@@ -664,27 +949,115 @@ body {
 .modal-dialog { max-width: 800px; }
 .modal-content-neo { /* Uses .neo-card styling */ }
 .modal-header-neo { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--panel-border-color); margin-bottom: 20px; }
-.modal-title-neo { font-size: 1.5em; font-weight: 600; color: var(--text-color-on-panel); }
-.neo-close-button { background: transparent; border: none; font-size: 2.2em; line-height: 1; color: var(--text-light-on-panel); cursor: pointer; padding: 0 5px; opacity: 0.8; transition: all 0.2s; border-radius: 8px; }
-.neo-close-button:hover { opacity: 1; color: var(--primary-color-accent); background-color: rgba(0,0,0,0.05); }
+.modal-title-neo { font-size: 1.5em; font-weight: 600; color: var(--text-primary); }
+.neo-close-button { background: transparent; border: none; font-size: 2.2em; line-height: 1; color: var(--text-secondary); cursor: pointer; padding: 0 5px; opacity: 0.8; transition: all 0.2s; border-radius: 8px; }
+.neo-close-button:hover { opacity: 1; color: var(--primary-accent); background-color: rgba(0,0,0,0.05); }
 .modal-body-neo { padding: 0; height: 400px; }
 #dayChart { width: 100% !important; height: 100% !important; }
 
 .user-select-controls { display: flex; flex-wrap: wrap; gap: 15px 20px; align-items: flex-end; margin-bottom: 20px; }
 .user-select-controls .filter-group { margin-bottom: 0; }
 .user-select-controls .neo-input { min-width: 250px; }
-.user-kpi { font-size: 1.1em; text-align: center; margin: 15px 0; color: var(--text-color-on-panel); }
-.user-kpi strong { color: var(--primary-color-accent); font-weight: 600; }
+.user-kpi { font-size: 1.1em; text-align: center; margin: 15px 0; color: var(--text-primary); }
+.user-kpi strong { color: var(--primary-accent); font-weight: 600; }
 .user-charts-grid { display: grid; grid-template-columns: 1fr; gap: var(--panel-padding); }
 #userDailyTrendChart, #userHourlyActivityChart, #userDayOfWeekActivityChart { width: 100% !important; height: 100% !important; }
 .neo-card-header { padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--panel-border-color); text-align: center; }
-.neo-card-header h4 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--text-color-on-panel); }
+.neo-card-header h4 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--text-primary); }
 .neo-card-body {}
 .chart-body-fixed-height { height: 320px; }
 
 .activity-patterns-grid .neo-card-header h4,
 #userDeepDiveCard .neo-card-header h4,
-#userDeepDiveCard .neo-card-header h5 { color: var(--text-color-on-panel); }
+#userDeepDiveCard .neo-card-header h5 { color: var(--text-primary); }
+
+/* Material Design Specific Component Styling */
+body[data-design-system="material"] .neo-button {
+    text-transform: uppercase;
+    font-weight: 500; 
+    padding: 8px 16px; 
+    letter-spacing: 0.0892857143em; 
+    box-shadow: none; 
+    border: 1px solid transparent; 
+}
+body[data-design-system="material"] .neo-button.btn-primary {
+    box-shadow: var(--panel-shadow); 
+}
+body[data-design-system="material"] .neo-button:not(.btn-primary) { 
+    border-color: var(--button-secondary-border); 
+}
+body[data-design-system="material"] .neo-button:not(.btn-primary):hover {
+    background-color: var(--button-secondary-hover-bg); 
+}
+
+body[data-design-system="material"] .neo-input {
+    border: none; 
+    border-bottom: 1px solid var(--input-border); 
+    border-radius: 4px 4px 0 0; 
+    background-color: var(--input-bg); 
+    box-shadow: none; 
+}
+body[data-design-system="material"] .neo-input:focus {
+    border-bottom-width: 2px; 
+    border-bottom-color: var(--input-focus-border);
+    box-shadow: none; 
+}
+
+body[data-design-system="material"] .neo-table th,
+body[data-design-system="material"] .neo-table td {
+    padding: 16px; 
+    text-align: left; 
+    border-bottom: 1px solid var(--panel-border-color); 
+}
+body[data-design-system="material"] .neo-table th {
+    font-weight: 500; 
+    text-align: left;
+}
+body[data-design-system="material"] .neo-table td {
+    text-align: left;
+}
+body[data-design-system="material"] .neo-table .user-link,
+body[data-design-system="material"] .neo-table .date-link {
+    text-align: left; 
+    display: block; 
+}
+body[data-design-system="material"] .neo-table td:nth-child(2), 
+body[data-design-system="material"] .neo-table td:nth-child(3) {
+    text-align: right;
+}
+body[data-design-system="material"] .neo-table th:nth-child(2),
+body[data-design-system="material"] .neo-table th:nth-child(3) {
+    text-align: right;
+}
+
+/* Fluent Design Specific Component Styling */
+body[data-design-system="fluent"] .neo-card,
+body[data-design-system="fluent"] .modal-content-neo {
+    backdrop-filter: blur(var(--glass-blur, 10px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
+}
+body[data-design-system="fluent"] .neo-button {
+    border-radius: 4px;
+    padding: 8px 12px;  /* Fluent specific padding */
+    font-weight: 600;   /* Fluent button font weight */
+    border-width: 1px; /* Fluent buttons usually have a border */
+}
+body[data-design-system="fluent"] .neo-input {
+    border-radius: 4px;
+    padding: 8px 10px;
+    border-width: 1px; /* Fluent inputs have a full border */
+}
+body[data-design-system="fluent"] .neo-input:focus {
+    box-shadow: 0 0 0 1px var(--input-focus-border), 0 0 0 3px rgba(var(--input-focus-shadow-rgb),.3); /* Fluent focus ring */
+}
+body[data-design-system="fluent"] .neo-table th,
+body[data-design-system="fluent"] .neo-table td {
+    padding: 12px 10px; /* Fluent table padding */
+}
+body[data-design-system="fluent"] .neo-table th {
+    font-weight: 600;
+}
+
 
 /* Responsiveness */
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
@@ -698,8 +1071,16 @@ body {
 @media (max-width: 768px) {
   body { padding: 15px; } .dashboard-container { gap: 20px; }
   :root { --panel-radius: 10px; --panel-padding: 15px; } 
+  body[data-design-system="material"].theme-light, body[data-design-system="material"].theme-dark,
+  body[data-design-system="fluent"].theme-light, body[data-design-system="fluent"].theme-dark { --panel-radius: 4px; --panel-padding: 16px;} /* Material/Fluent specific for smaller screens */
+
+
   .neo-card-title { font-size: 1.2em; } .kpi-item p { font-size: 1.7em; }
   .neo-button, .neo-input { padding: 10px 14px; font-size: 0.85em; border-radius: 4px;}
+  body[data-design-system="material"] .neo-button { padding: 6px 12px; } 
+  body[data-design-system="fluent"] .neo-button { padding: 8px 12px; } 
+
+
   .filter-buttons { flex-direction: row; }
   .filter-buttons .neo-button { flex-basis: calc(50% - 5px); }
   .modal-dialog { margin: 10px; max-width: calc(100% - 20px); }
@@ -709,6 +1090,9 @@ body {
 @media (max-width: 480px) {
     .dashboard-header h1 { font-size: 1.3em; }
     :root { --panel-radius: 8px; --panel-padding: 12px; }
+    body[data-design-system="material"].theme-light, body[data-design-system="material"].theme-dark,
+    body[data-design-system="fluent"].theme-light, body[data-design-system="fluent"].theme-dark { --panel-radius: 4px; --panel-padding: 12px;}
+
     .kpi-grid { grid-template-columns: 1fr; }
     .filter-buttons .neo-button { flex-basis: 100%; }
     .neo-table { font-size: 0.8em; } .neo-table th, .neo-table td { padding: 8px 10px; }
@@ -721,3 +1105,7 @@ body {
 </style>
 </body>
 </html>
+
+[end of templates/detailed_report.html]
+
+[end of templates/detailed_report.html]
