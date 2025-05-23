@@ -48,7 +48,7 @@
         <input type="date" id="endDateInput" class="neo-input" value="{{ current_end_date if current_end_date else '' }}">
       </div>
       <div class="filter-buttons">
-        <button class="neo-button" id="applyDateFilterBtn">Применить</button>
+        <button class="neo-button btn-primary" id="applyDateFilterBtn">Применить</button>
         <button class="neo-button" id="btnLast7Days">7 дней</button>
         <button class="neo-button" id="btnLast14Days">14 дней</button> 
         <button class="neo-button" id="btnThisMonth">Этот месяц</button>
@@ -93,19 +93,19 @@
       <div class="user-charts-grid">
         <div class="neo-card chart-body-fixed-height"> 
            <div class="neo-card-header" style="padding-bottom: 10px; margin-bottom:10px; border-bottom: none;">
-             <h5 style="font-size: 1em; color: var(--text-light-on-glass); margin:0;">Daily Trend</h5>
+             <h5 style="font-size: 1em; color: var(--text-light-on-panel); margin:0;">Daily Trend</h5>
            </div>
           <canvas id="userDailyTrendChart"></canvas>
         </div>
         <div class="neo-card chart-body-fixed-height">
            <div class="neo-card-header" style="padding-bottom: 10px; margin-bottom:10px; border-bottom: none;">
-             <h5 style="font-size: 1em; color: var(--text-light-on-glass); margin:0;">Hourly Activity</h5>
+             <h5 style="font-size: 1em; color: var(--text-light-on-panel); margin:0;">Hourly Activity</h5>
            </div>
           <canvas id="userHourlyActivityChart"></canvas>
         </div>
         <div class="neo-card chart-body-fixed-height">
             <div class="neo-card-header" style="padding-bottom: 10px; margin-bottom:10px; border-bottom: none;">
-             <h5 style="font-size: 1em; color: var(--text-light-on-glass); margin:0;">Day of Week Activity</h5>
+             <h5 style="font-size: 1em; color: var(--text-light-on-panel); margin:0;">Day of Week Activity</h5>
            </div>
           <canvas id="userDayOfWeekActivityChart"></canvas>
         </div>
@@ -152,7 +152,7 @@
   </div>
   
   <footer class="dashboard-footer">
-    <a href="/export?start_date={{current_start_date | default('')}}&end_date={{current_end_date | default('')}}" class="neo-button export-button">📥 Экспорт в Excel</a>
+    <a href="/export?start_date={{current_start_date | default('')}}&end_date={{current_end_date | default('')}}" class="neo-button btn-primary export-button">📥 Экспорт в Excel</a>
   </footer>
 
 </div> <!-- /dashboard-container -->
@@ -160,7 +160,7 @@
 <!-- === Модальное окно 24 часа === -->
 <div class="modal fade" id="dayModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="neo-card modal-content-neo"> <!-- Applied .neo-card for glass effect -->
+    <div class="neo-card modal-content-neo"> 
       <div class="modal-header-neo">
         <h5 class="modal-title-neo">Детализация за <span id="modalDate"></span></h5>
         <button type="button" class="neo-close-button" data-bs-dismiss="modal" aria-label="Close">&times;</button>
@@ -187,15 +187,15 @@ const currentStartDate = "{{ current_start_date if current_start_date else '' }}
 const currentEndDate = "{{ current_end_date if current_end_date else '' }}";
 const chartFont = "'Inter', sans-serif";
 
-const primaryColorAccent = '#0ea5e9'; 
-const secondaryColorAccent = '#f43f5e'; 
-const tertiaryColorAccent = '#22c55e'; 
+const primaryColorAccent = '#007bff'; 
+const secondaryColorAccent = '#dc3545'; 
+const tertiaryColorAccent = '#28a745'; 
 
 const panelTextColor = '#1f2937'; 
-const bodyTextColorGlobal = '#e5e7eb';   
-const chartGridColorGlobal = 'rgba(255, 255, 255, 0.2)'; 
-const chartTickColorGlobal = 'rgba(255, 255, 255, 0.7)'; 
-const chartTitleColorGlobal = '#ffffff'; 
+const bodyTextColorGlobal = '#212529'; 
+const chartGridColorGlobal = 'rgba(0, 0, 0, 0.1)'; 
+const chartTickColorGlobal = '#555b66'; 
+const chartTitleColorGlobal = '#1f2937'; 
 
 /* --------------- График Динамика за выбранный период --------------- */
 let currentChart;
@@ -212,7 +212,7 @@ function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Д
       label: 'Файлы',
       data: filesData,
       borderColor: primaryColorAccent,
-      backgroundColor: 'rgba(14, 165, 233, 0.2)', 
+      backgroundColor: 'rgba(0, 123, 255, 0.2)', 
       tension: 0.4, 
       fill: true,
       pointBackgroundColor: primaryColorAccent,
@@ -230,7 +230,7 @@ function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Д
       label: 'Активные пользователи', 
       data: usersData,
       borderColor: secondaryColorAccent,
-      backgroundColor: 'rgba(244, 63, 94, 0.2)', 
+      backgroundColor: 'rgba(220, 53, 69, 0.2)', 
       tension: 0.4,
       fill: true,
       pointBackgroundColor: secondaryColorAccent,
@@ -248,7 +248,7 @@ function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Д
       label: 'Новые пользователи',
       data: newUsersData,
       borderColor: tertiaryColorAccent, 
-      backgroundColor: 'rgba(34, 197, 94, 0.2)',
+      backgroundColor: 'rgba(40, 167, 69, 0.2)',
       tension: 0.4,
       fill: true,
       pointBackgroundColor: tertiaryColorAccent,
@@ -270,7 +270,7 @@ function renderChart(dailyData, dailyUserData, dailyNewUserData, titleText = 'Д
       plugins: {
         title: { display: true, text: titleText, font: { size: 18, family: chartFont, weight: '600' }, color: chartTitleColorGlobal, padding: { top:10, bottom: 20 } },
         legend: { position: 'bottom', labels: { font: { family: chartFont, size: 14 }, color: chartTickColorGlobal, usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 8 } },
-        tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleFont: { family: chartFont, size: 14, weight: '600' }, bodyFont: { family: chartFont, size: 12 }, padding: 12, cornerRadius: 8, displayColors: true, boxPadding: 4 }
+        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { family: chartFont, size: 14, weight: '600' }, bodyFont: { family: chartFont, size: 12 }, padding: 12, cornerRadius: 8, displayColors: true, boxPadding: 4 }
       },
       scales: {
         x: { ticks: { font: { family: chartFont, size: 12 }, color: chartTickColorGlobal }, grid: { display: false } },
@@ -293,8 +293,8 @@ function renderHourlyActivityChart() {
       labels: hourlyLabels,
       datasets: [{
         label: 'Файлов в час', data: hourlyDistribution,
-        backgroundColor: 'rgba(14, 165, 233, 0.6)', borderColor: primaryColorAccent,
-        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: 'rgba(14, 165, 233, 0.8)'
+        backgroundColor: 'rgba(0, 123, 255, 0.6)', borderColor: primaryColorAccent,
+        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: 'rgba(0, 123, 255, 0.8)'
       }]
     },
     options: {
@@ -314,8 +314,8 @@ function renderDayOfWeekActivityChart() {
       labels: dowLabels,
       datasets: [{
         label: 'Файлов за день недели', data: dayOfWeekDistribution,
-        backgroundColor: 'rgba(244, 63, 94, 0.6)', borderColor: secondaryColorAccent,
-        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: 'rgba(244, 63, 94, 0.8)'
+        backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: secondaryColorAccent,
+        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: 'rgba(220, 53, 69, 0.8)'
       }]
     },
     options: {
@@ -340,7 +340,7 @@ function renderUserDailyTrendChart(dailyActivity) {
     const labels = dailyActivity.map(item => item[0]);
     const data = dailyActivity.map(item => item[1]);
     userDailyTrendChartInstance = new Chart(document.getElementById('userDailyTrendChart'), {
-        type: 'line', data: { labels: labels, datasets: [{ label: 'Файлов в день', data: data, borderColor: primaryColorAccent, backgroundColor: 'rgba(14, 165, 233, 0.2)', tension: 0.4, fill: true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff' }] },
+        type: 'line', data: { labels: labels, datasets: [{ label: 'Файлов в день', data: data, borderColor: primaryColorAccent, backgroundColor: 'rgba(0, 123, 255, 0.2)', tension: 0.4, fill: true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff' }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } } }
     });
 }
@@ -349,7 +349,7 @@ function renderUserHourlyActivityChart(hourlyData) {
     if (userHourlyActivityChartInstance) userHourlyActivityChartInstance.destroy();
     const hourlyLabels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
     userHourlyActivityChartInstance = new Chart(document.getElementById('userHourlyActivityChart'), {
-        type: 'bar', data: { labels: hourlyLabels, datasets: [{ label: 'Файлов в час', data: hourlyData, backgroundColor: 'rgba(14, 165, 233, 0.6)', borderColor: primaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
+        type: 'bar', data: { labels: hourlyLabels, datasets: [{ label: 'Файлов в час', data: hourlyData, backgroundColor: 'rgba(0, 123, 255, 0.6)', borderColor: primaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 10 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } } }
     });
 }
@@ -358,7 +358,7 @@ function renderUserDayOfWeekActivityChart(dowData) {
     if (userDayOfWeekActivityChartInstance) userDayOfWeekActivityChartInstance.destroy();
     const dowLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     userDayOfWeekActivityChartInstance = new Chart(document.getElementById('userDayOfWeekActivityChart'), {
-        type: 'bar', data: { labels: dowLabels, datasets: [{ label: 'Файлов за день недели', data: dowData, backgroundColor: 'rgba(244, 63, 94, 0.6)', borderColor: secondaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
+        type: 'bar', data: { labels: dowLabels, datasets: [{ label: 'Файлов за день недели', data: dowData, backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: secondaryColorAccent, borderWidth: 1, borderRadius: 5 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { family: chartFont, size: 11 }, color: panelTextColor }, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } } } }
     });
 }
@@ -451,7 +451,7 @@ function renderDayChart(hours){
     data:{
       labels:Array.from({length:24},(_,h)=>String(h).padStart(2,'0')+':00'),
       datasets:[{
-          label:'Файлы', data:hours, borderColor: primaryColorAccent, backgroundColor: 'rgba(14, 165, 233, 0.2)',
+          label:'Файлы', data:hours, borderColor: primaryColorAccent, backgroundColor: 'rgba(0, 123, 255, 0.2)',
           tension:0.4, fill:true, pointBackgroundColor: primaryColorAccent, pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff', pointHoverBorderColor: primaryColorAccent,
           pointHoverRadius: 6, pointHoverBorderWidth: 2, pointRadius: 4
@@ -494,43 +494,46 @@ setInterval(()=>{ fetch('/server_time').then(r=>r.json()).then(d=>{ const srvTim
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@keyframes gradientBG {
+/* @keyframes gradientBG {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
-}
+} */
 
 :root {
-  /* Glassmorphism Palette */
-  --glass-bg: rgba(255, 255, 255, 0.1); 
-  --glass-border-color: rgba(255, 255, 255, 0.2); 
-  --glass-shadow: 0 5px 20px rgba(0, 0, 0, 0.15); 
-  --glass-blur: 8px; 
-
-  /* Text & Accent Colors for Glassmorphism */
-  --text-color-on-dark-bg: #e0e5ec; 
-  --text-color-on-glass: #2c3e50;  
-  --text-light-on-glass: #566573; 
+  /* Light Theme Palette */
+  --panel-bg: #FFFFFF; 
+  --panel-border-color: #dee2e6; /* Softer border for panels */
+  --panel-shadow: 0px 5px 15px rgba(0, 0, 0, 0.08); /* Softer, more diffused shadow */
   
-  --primary-color-accent: #0ea5e9; 
-  --secondary-color-accent: #f43f5e; 
-  --tertiary-color-accent: #22c55e; 
+  --text-color-on-light-bg: #212529; 
+  --text-color-on-panel: #343a40;  /* Primary text on panels */
+  --text-light-on-panel: #6c757d; /* Secondary text on panels */
+  
+  --primary-color-accent: #007bff; 
+  --primary-color-accent-darker: #0056b3; /* For hover/active */
+  --secondary-color-accent: #dc3545; 
+  --tertiary-color-accent: #28a745; 
+  --btn-secondary-bg: #f8f9fa;
+  --btn-secondary-border: #ced4da;
+  --btn-secondary-hover-bg: #e2e6ea;
+  --btn-secondary-hover-border: #adb5bd;
 
-  --chart-title-color-global: #f0f4f8; 
-  --chart-tick-color-global: rgba(230, 235, 240, 0.75); 
-  --chart-grid-color-global: rgba(230, 235, 240, 0.15); 
+
+  /* Chart colors for light theme */
+  --chart-title-color: #343a40; 
+  --chart-tick-color: #495057; 
+  --chart-grid-color: rgba(0, 0, 0, 0.08);
 
   /* General Layout & Sizing */
-  --neo-radius: 16px; 
-  --neo-padding: 20px; 
+  --panel-radius: 10px; /* Slightly less rounded */
+  --panel-padding: 20px; 
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(120deg, #2c3e50 0%, #34495e 50%, #4ca1af 100%);
-  background-size: 200% 200%; /* Adjusted for smoother animation */
-  animation: gradientBG 25s ease infinite;
-  color: var(--text-color-on-dark-bg); 
+  background-color: #F8F9FA; 
+  color: var(--text-color-on-light-bg); 
   margin: 0;
   padding: 20px; 
   line-height: 1.6;
@@ -541,130 +544,147 @@ body {
 
 .dashboard-container { display: flex; flex-direction: column; gap: 25px; max-width: 1600px; margin: auto; }
 .dashboard-header { text-align: center; padding: 10px 0; margin-bottom: 10px; }
-.dashboard-header h1 { font-size: 2.2em; font-weight: 700; color: var(--text-color-on-dark-bg); margin-bottom: 0.2em; }
-.server-time { font-size: 0.95em; color: var(--text-color-on-dark-bg); opacity: 0.8; }
+.dashboard-header h1 { font-size: 2.2em; font-weight: 700; color: var(--text-color-on-panel); margin-bottom: 0.2em; } 
+.server-time { font-size: 0.95em; color: var(--text-light-on-panel); opacity: 0.8; } 
 
 .neo-card { 
-  background-color: var(--glass-bg);
-  border-radius: var(--neo-radius);
-  padding: var(--neo-padding);
-  border: 1px solid var(--glass-border-color);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  background-color: var(--panel-bg);
+  border-radius: var(--panel-radius);
+  padding: var(--panel-padding);
+  border: 1px solid var(--panel-border-color);
+  box-shadow: var(--panel-shadow);
+  transition: box-shadow 0.25s ease-in-out;
 }
-.neo-card-title { font-size: 1.4em; font-weight: 600; color: var(--text-color-on-glass); margin-bottom: 20px; text-align: center; }
+.neo-card-title { font-size: 1.4em; font-weight: 600; color: var(--text-color-on-panel); margin-bottom: 20px; text-align: center; }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--neo-padding); }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--panel-padding); }
 .kpi-item {
   text-align: center; padding: 20px; 
-  background-color: rgba(255, 255, 255, 0.07); 
-  border-radius: calc(var(--neo-radius) - 6px); 
-  border: 1px solid rgba(255,255,255,0.15);
+  background-color: var(--panel-bg); /* Match parent card */
+  border-radius: calc(var(--panel-radius) - 6px); 
+  /* No border or shadow for KPI items if they are to blend into the parent card */
 }
-.kpi-item h2 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light-on-glass); margin-bottom: 8px; font-weight: 500; }
+.kpi-item h2 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light-on-panel); margin-bottom: 8px; font-weight: 500; }
 .kpi-item p { font-size: 2em; font-weight: 700; color: var(--primary-color-accent); margin: 0; }
 
 .date-filters .filter-controls { display: flex; flex-wrap: wrap; gap: 15px 20px; align-items: flex-end; justify-content: center; }
 .filter-group { display: flex; flex-direction: column; flex-grow: 1; min-width: 180px; }
-.filter-group label { font-size: 0.85em; color: var(--text-light-on-glass); margin-bottom: 6px; font-weight: 500; }
+.filter-group label { font-size: 0.85em; color: var(--text-light-on-panel); margin-bottom: 6px; font-weight: 500; }
 .filter-buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-top: 22px; }
 
 .neo-input, .neo-button {
-  background-color: rgba(255, 255, 255, 0.08); 
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-color-on-dark-bg); 
-  border-radius: 8px; 
+  border-radius: 6px; 
   padding: 10px 16px; 
   font-size: 0.95em;
   font-family: 'Inter', sans-serif;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   outline: none;
 }
-.neo-input { width: 100%; box-sizing: border-box; }
-.neo-input:focus {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: var(--primary-color-accent);
-  box-shadow: 0 0 0 2px var(--primary-color-accent); 
+.neo-input { 
+  width: 100%; box-sizing: border-box; 
+  background-color: #FFFFFF;
+  border: 1px solid #CED4DA;
+  color: var(--text-color-on-panel);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.075);
 }
+.neo-input:focus {
+  border-color: var(--primary-color-accent);
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); 
+}
+
 .neo-button {
   font-weight: 500; cursor: pointer;
+  background-color: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  color: var(--text-color-on-panel);
 }
 .neo-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-  color: #fff;
+  background-color: var(--btn-secondary-hover-bg);
+  border-color: var(--btn-secondary-hover-border);
 }
 .neo-button:active {
-  background-color: rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-  transform: translateY(1px); 
-  color: rgba(255,255,255,0.9);
+  background-color: #d3d9df; /* Slightly darker for active */
+  border-color: #a1aabb;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.neo-button.btn-primary {
+  background-color: var(--primary-color-accent);
+  color: #FFFFFF;
+  border-color: var(--primary-color-accent);
+}
+.neo-button.btn-primary:hover {
+  background-color: var(--primary-color-accent-darker);
+  border-color: var(--primary-color-accent-darker);
+  color: #FFFFFF;
+}
+.neo-button.btn-primary:active {
+  background-color: #004a99; /* Even darker for active primary */
+  border-color: #004a99;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+}
+
 .neo-button.export-button { 
-    background-color: rgba(34, 197, 94, 0.5); 
-    border-color: rgba(34, 197, 94, 0.7);
-    color: white;
+    background-color: var(--tertiary-color-accent); 
+    border-color: #1c7430; /* Darker green for border */
+    color: white; 
 }
 .neo-button.export-button:hover {
-    background-color: rgba(34, 197, 94, 0.7);
-    border-color: rgba(34, 197, 94, 0.9);
+    background-color: #1f823a; /* Darker green on hover */
+    border-color: #176329;
     color: white;
 }
 
-.chart-container { height: 480px; padding: var(--neo-padding); }
+.chart-container { height: 480px; padding: var(--panel-padding); }
 #dynamicChart { width: 100% !important; height: 100% !important; }
-.activity-patterns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--neo-padding); }
+.activity-patterns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--panel-padding); }
 #hourlyActivityChart, #dayOfWeekActivityChart { width: 100% !important; height: 100% !important; }
 
-.tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--neo-padding); }
+.tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--panel-padding); }
 .table-responsive {
-  overflow-x: auto; border-radius: calc(var(--neo-radius) - 4px); padding: 10px; 
-  background-color: rgba(255,255,255,0.03); 
-  border: 1px solid rgba(255,255,255,0.1);
+  overflow-x: auto; border-radius: calc(var(--panel-radius) - 4px); padding: 0; 
+  background-color: transparent; 
+  border: none; 
 }
 .neo-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.9em; }
-.neo-table th, .neo-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--glass-border-color); }
+.neo-table th, .neo-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--panel-border-color); }
 .neo-table th:first-child, .neo-table td:first-child { padding-left: 20px; }
 .neo-table th:last-child, .neo-table td:last-child { padding-right: 20px; }
 .neo-table thead tr { background-color: transparent; }
-.neo-table th { font-weight: 600; color: var(--text-light-on-glass); text-align: center; border-bottom-width: 1px; }
-.neo-table td { text-align: center; color: var(--text-color-on-glass); }
+.neo-table th { font-weight: 600; color: var(--text-light-on-panel); text-align: center; border-bottom-width: 2px; border-bottom-color: var(--panel-border-color); }
+.neo-table td { text-align: center; color: var(--text-color-on-panel); }
 .neo-table tbody tr:last-child td { border-bottom: none; }
-.neo-table tbody tr:hover { background-color: rgba(255,255,255,0.05); }
+.neo-table tbody tr:hover { background-color: #f1f3f5; } 
 .neo-link { color: var(--primary-color-accent); text-decoration: none; font-weight: 500; }
-.neo-link:hover { color: #38bdf8; text-decoration: underline; }
+.neo-link:hover { color: var(--primary-color-accent-darker); text-decoration: underline; } 
 
 .dashboard-footer { text-align: center; padding-top: 20px; }
 
-.modal-backdrop.show { background-color: rgba(10, 20, 30, 0.3); backdrop-filter: blur(4px); opacity: 1; }
+.modal-backdrop.show { background-color: rgba(0,0,0,0.4); backdrop-filter: blur(2px); opacity: 1; } 
 .modal-dialog { max-width: 800px; }
 .modal-content-neo { /* Uses .neo-card styling */ }
-.modal-header-neo { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border-color); margin-bottom: 20px; }
-.modal-title-neo { font-size: 1.5em; font-weight: 600; color: var(--text-color-on-glass); }
-.neo-close-button { background: transparent; border: none; font-size: 2.2em; line-height: 1; color: var(--text-light-on-glass); cursor: pointer; padding: 0 5px; opacity: 0.8; transition: all 0.2s; border-radius: 8px; }
-.neo-close-button:hover { opacity: 1; color: var(--primary-color-accent); background-color: rgba(255,255,255,0.05); }
+.modal-header-neo { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--panel-border-color); margin-bottom: 20px; }
+.modal-title-neo { font-size: 1.5em; font-weight: 600; color: var(--text-color-on-panel); }
+.neo-close-button { background: transparent; border: none; font-size: 2.2em; line-height: 1; color: var(--text-light-on-panel); cursor: pointer; padding: 0 5px; opacity: 0.8; transition: all 0.2s; border-radius: 8px; }
+.neo-close-button:hover { opacity: 1; color: var(--primary-color-accent); background-color: rgba(0,0,0,0.05); }
 .modal-body-neo { padding: 0; height: 400px; }
 #dayChart { width: 100% !important; height: 100% !important; }
 
 .user-select-controls { display: flex; flex-wrap: wrap; gap: 15px 20px; align-items: flex-end; margin-bottom: 20px; }
 .user-select-controls .filter-group { margin-bottom: 0; }
 .user-select-controls .neo-input { min-width: 250px; }
-.user-kpi { font-size: 1.1em; text-align: center; margin: 15px 0; color: var(--text-color-on-glass); }
+.user-kpi { font-size: 1.1em; text-align: center; margin: 15px 0; color: var(--text-color-on-panel); }
 .user-kpi strong { color: var(--primary-color-accent); font-weight: 600; }
-.user-charts-grid { display: grid; grid-template-columns: 1fr; gap: var(--neo-padding); }
+.user-charts-grid { display: grid; grid-template-columns: 1fr; gap: var(--panel-padding); }
 #userDailyTrendChart, #userHourlyActivityChart, #userDayOfWeekActivityChart { width: 100% !important; height: 100% !important; }
-.neo-card-header { padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border-color); text-align: center; }
-.neo-card-header h4 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--text-color-on-glass); }
+.neo-card-header { padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--panel-border-color); text-align: center; }
+.neo-card-header h4 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--text-color-on-panel); }
 .neo-card-body {}
 .chart-body-fixed-height { height: 320px; }
 
 .activity-patterns-grid .neo-card-header h4,
 #userDeepDiveCard .neo-card-header h4,
-#userDeepDiveCard .neo-card-header h5 { color: var(--text-color-on-glass); }
+#userDeepDiveCard .neo-card-header h5 { color: var(--text-color-on-panel); }
 
 /* Responsiveness */
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
@@ -677,9 +697,9 @@ body {
 }
 @media (max-width: 768px) {
   body { padding: 15px; } .dashboard-container { gap: 20px; }
-  :root { --neo-radius: 14px; --neo-padding: 15px; } 
+  :root { --panel-radius: 10px; --panel-padding: 15px; } 
   .neo-card-title { font-size: 1.2em; } .kpi-item p { font-size: 1.7em; }
-  .neo-button, .neo-input { padding: 10px 14px; font-size: 0.85em; border-radius: 6px;}
+  .neo-button, .neo-input { padding: 10px 14px; font-size: 0.85em; border-radius: 4px;}
   .filter-buttons { flex-direction: row; }
   .filter-buttons .neo-button { flex-basis: calc(50% - 5px); }
   .modal-dialog { margin: 10px; max-width: calc(100% - 20px); }
@@ -688,7 +708,7 @@ body {
 }
 @media (max-width: 480px) {
     .dashboard-header h1 { font-size: 1.3em; }
-    :root { --neo-radius: 10px; --neo-padding: 12px; }
+    :root { --panel-radius: 8px; --panel-padding: 12px; }
     .kpi-grid { grid-template-columns: 1fr; }
     .filter-buttons .neo-button { flex-basis: 100%; }
     .neo-table { font-size: 0.8em; } .neo-table th, .neo-table td { padding: 8px 10px; }
