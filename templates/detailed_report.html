@@ -566,6 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
   --text-primary: #212529;
   --text-secondary: #6c757d;
   --text-on-accent: #FFFFFF;
+  --text-color-on-panel: var(--text-primary); 
 
   --primary-accent: #007bff;
   --primary-accent-darker: #0056b3;
@@ -593,6 +594,8 @@ document.addEventListener('DOMContentLoaded', () => {
   --panel-border: 1px solid #E0E0E0;
   --panel-radius: 12px;
   --panel-padding: 20px;
+  --glass-blur: 10px; /* Default blur, can be overridden */
+
 
   --chart-title-color: #1f2937;
   --chart-tick-color: #555b66;
@@ -605,6 +608,7 @@ body.theme-dark { /* Default Dark Theme */
   --panel-bg: #1e1e1e;
   --text-primary: #e0e0e0;
   --text-secondary: #b0b0b0;
+  --text-color-on-panel: var(--text-primary);
   
   --primary-accent: #008cff;
   --primary-accent-darker: #006bb3;
@@ -642,6 +646,7 @@ body[data-design-system="material"].theme-light {
   --text-primary: rgba(0, 0, 0, 0.87);
   --text-secondary: rgba(0, 0, 0, 0.60);
   --text-on-accent: #FFFFFF;
+  --text-color-on-panel: var(--text-primary);
 
   --primary-accent: #3f51b5; /* Indigo 500 */
   --primary-accent-darker: #303f9f; /* Indigo 700 */
@@ -661,7 +666,7 @@ body[data-design-system="material"].theme-light {
 
   --input-bg: rgba(0, 0, 0, 0.06); /* Filled input background */
   --input-text: var(--text-primary);
-  --input-border: transparent; /* Filled inputs often have no side borders, just bottom */
+  --input-border: rgba(0, 0, 0, 0.42); /* Resting filled input bottom line */
   --input-focus-border: var(--primary-accent); /* Bottom line color on focus */
   --input-focus-shadow-rgb: var(--primary-accent-rgb); 
 
@@ -683,6 +688,7 @@ body[data-design-system="material"].theme-dark {
   --text-primary: rgba(255, 255, 255, 0.87);
   --text-secondary: rgba(255, 255, 255, 0.60);
   --text-on-accent: #FFFFFF; 
+  --text-color-on-panel: var(--text-primary);
 
   --primary-accent: #7986cb; /* Lighter Indigo for dark */
   --primary-accent-darker: #5c6bc0;
@@ -702,7 +708,7 @@ body[data-design-system="material"].theme-dark {
 
   --input-bg: rgba(255, 255, 255, 0.09);
   --input-text: var(--text-primary);
-  --input-border: transparent;
+  --input-border: rgba(255,255,255,0.7); /* Resting filled input bottom line for dark */
   --input-focus-border: var(--primary-accent);
 
   --panel-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 2px 2px rgba(0,0,0,0.14), 0 0 2px rgba(0,0,0,0.12); /* Subtle shadow for dark */
@@ -719,10 +725,11 @@ body[data-design-system="material"].theme-dark {
 /* Fluent Design Light Theme */
 body[data-design-system="fluent"].theme-light {
   --page-bg: #F3F3F3; 
-  --panel-bg: rgba(252, 252, 252, 0.7); /* Acrylic-like */
+  --panel-bg: rgba(252, 252, 252, 0.85); /* Acrylic-like, refined opacity */
   --text-primary: #000000; 
-  --text-secondary: #333333; /* Darker secondary for Fluent light */
+  --text-secondary: #333333; 
   --text-on-accent: #FFFFFF;
+  --text-color-on-panel: var(--text-primary);
 
   --primary-accent: #0078D4; /* Fluent Blue */
   --primary-accent-darker: #005A9E;
@@ -747,10 +754,10 @@ body[data-design-system="fluent"].theme-light {
   --input-focus-shadow-rgb: var(--primary-accent-rgb); 
 
   --panel-shadow: 0px 1.6px 3.6px rgba(0,0,0,0.132), 0px 0.3px 0.9px rgba(0,0,0,0.108); /* Fluent elevation */
-  --panel-border: 1px solid rgba(0, 0, 0, 0.06); 
+  --panel-border: 1px solid rgba(0, 0, 0, 0.10); /* Slightly more visible */
   --panel-radius: 6px; 
-  --panel-padding: 20px; 
-  --glass-blur: 15px; /* Fluent acrylic blur */
+  --panel-padding: 16px; /* Adjusted for Fluent */
+  --glass-blur: 20px; /* Fluent acrylic blur - more pronounced */
 
 
   --chart-title-color: var(--text-primary);
@@ -762,10 +769,11 @@ body[data-design-system="fluent"].theme-light {
 /* Fluent Design Dark Theme */
 body[data-design-system="fluent"].theme-dark {
   --page-bg: #201F1F; /* Fluent dark background */
-  --panel-bg: rgba(45, 45, 45, 0.75); /* Dark Acrylic */
+  --panel-bg: rgba(45, 45, 45, 0.85); /* Dark Acrylic, refined opacity */
   --text-primary: #FFFFFF;
   --text-secondary: #D1D1D1;
   --text-on-accent: #000000; /* Black text on bright accents for Fluent Dark */
+  --text-color-on-panel: var(--text-primary);
 
   --primary-accent: #479EF5; /* Brighter Fluent blue for dark theme */
   --primary-accent-darker: #2A7FDE;
@@ -789,10 +797,10 @@ body[data-design-system="fluent"].theme-dark {
   --input-focus-border: var(--primary-accent);
 
   --panel-shadow: 0px 1.6px 3.6px rgba(0,0,0,0.26), 0px 0.3px 0.9px rgba(0,0,0,0.22); 
-  --panel-border: 1px solid rgba(255, 255, 255, 0.1); 
+  --panel-border: 1px solid rgba(255, 255, 255, 0.12); /* Slightly more visible */
   --panel-radius: 6px;
-  --panel-padding: 20px;
-  --glass-blur: 15px; /* Fluent acrylic blur */
+  --panel-padding: 16px; /* Adjusted for Fluent */
+  --glass-blur: 20px; /* Fluent acrylic blur - more pronounced */
 
   --chart-title-color: var(--text-primary);
   --chart-tick-color: var(--text-secondary);
@@ -830,8 +838,8 @@ body {
 /* Apply backdrop-filter for Fluent */
 body[data-design-system="fluent"] .neo-card,
 body[data-design-system="fluent"] .modal-content-neo { 
-    backdrop-filter: blur(var(--glass-blur, 10px)); 
-    -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
+    backdrop-filter: blur(var(--glass-blur)); 
+    -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .neo-card-title { font-size: 1.4em; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center; }
@@ -842,11 +850,11 @@ body[data-design-system="fluent"] .modal-content-neo {
   background-color: var(--panel-bg); 
   border-radius: calc(var(--panel-radius) - 6px); 
 }
-body[data-design-system="fluent"] .kpi-item {
-    background-color: rgba(255,255,255,0.1); 
+body[data-design-system="fluent"].theme-light .kpi-item {
+    background-color: rgba(252,252,252,0.45); /* Adjusted Fluent Light kpi item */
 }
 body[data-design-system="fluent"].theme-dark .kpi-item {
-    background-color: rgba(50,50,50,0.5); 
+    background-color: rgba(60,60,60,0.7); /* Adjusted Fluent Dark kpi item */
 }
 
 .kpi-item h2 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
@@ -870,8 +878,12 @@ body[data-design-system="fluent"].theme-dark .kpi-item {
   background-color: var(--input-bg);
   border: 1px solid var(--input-border);
   color: var(--input-text);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.075);
+  /* Removed default inset shadow for inputs to let design systems control it */
 }
+body[data-design-system="default"] .neo-input {
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.075); /* Keep for default */
+}
+
 .neo-input:focus {
   border-color: var(--input-focus-border);
   box-shadow: 0 0 0 0.2rem rgba(var(--input-focus-shadow-rgb),.25); 
@@ -1033,26 +1045,27 @@ body[data-design-system="material"] .neo-table th:nth-child(3) {
 /* Fluent Design Specific Component Styling */
 body[data-design-system="fluent"] .neo-card,
 body[data-design-system="fluent"] .modal-content-neo {
-    backdrop-filter: blur(var(--glass-blur, 10px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 body[data-design-system="fluent"] .neo-button {
-    border-radius: 4px;
-    padding: 8px 12px;  /* Fluent specific padding */
-    font-weight: 600;   /* Fluent button font weight */
-    border-width: 1px; /* Fluent buttons usually have a border */
+    border-radius: 3px;
+    padding: 6px 12px; 
+    font-weight: 400;   
+    border-width: 1px; 
 }
 body[data-design-system="fluent"] .neo-input {
-    border-radius: 4px;
-    padding: 8px 10px;
-    border-width: 1px; /* Fluent inputs have a full border */
+    border-radius: 3px;
+    padding: 6px 10px;
+    border-width: 1px; 
+    box-shadow: none; /* Remove default inner shadow for Fluent */
 }
 body[data-design-system="fluent"] .neo-input:focus {
     box-shadow: 0 0 0 1px var(--input-focus-border), 0 0 0 3px rgba(var(--input-focus-shadow-rgb),.3); /* Fluent focus ring */
 }
 body[data-design-system="fluent"] .neo-table th,
 body[data-design-system="fluent"] .neo-table td {
-    padding: 12px 10px; /* Fluent table padding */
+    padding: 10px 8px; 
 }
 body[data-design-system="fluent"] .neo-table th {
     font-weight: 600;
@@ -1070,15 +1083,18 @@ body[data-design-system="fluent"] .neo-table th {
 }
 @media (max-width: 768px) {
   body { padding: 15px; } .dashboard-container { gap: 20px; }
-  :root { --panel-radius: 10px; --panel-padding: 15px; } 
-  body[data-design-system="material"].theme-light, body[data-design-system="material"].theme-dark,
-  body[data-design-system="fluent"].theme-light, body[data-design-system="fluent"].theme-dark { --panel-radius: 4px; --panel-padding: 16px;} /* Material/Fluent specific for smaller screens */
+  
+  body[data-design-system="default"] { --panel-radius: 10px; --panel-padding: 15px; } 
+  body[data-design-system="material"] { --panel-radius: 4px; --panel-padding: 16px;}
+  body[data-design-system="fluent"] { --panel-radius: 6px; --panel-padding: 16px;} 
 
 
   .neo-card-title { font-size: 1.2em; } .kpi-item p { font-size: 1.7em; }
   .neo-button, .neo-input { padding: 10px 14px; font-size: 0.85em; border-radius: 4px;}
+  
   body[data-design-system="material"] .neo-button { padding: 6px 12px; } 
-  body[data-design-system="fluent"] .neo-button { padding: 8px 12px; } 
+  body[data-design-system="fluent"] .neo-button { padding: 8px 12px; border-radius: 3px; } 
+  body[data-design-system="fluent"] .neo-input { border-radius: 3px; }
 
 
   .filter-buttons { flex-direction: row; }
@@ -1089,9 +1105,10 @@ body[data-design-system="fluent"] .neo-table th {
 }
 @media (max-width: 480px) {
     .dashboard-header h1 { font-size: 1.3em; }
-    :root { --panel-radius: 8px; --panel-padding: 12px; }
-    body[data-design-system="material"].theme-light, body[data-design-system="material"].theme-dark,
-    body[data-design-system="fluent"].theme-light, body[data-design-system="fluent"].theme-dark { --panel-radius: 4px; --panel-padding: 12px;}
+
+    body[data-design-system="default"] { --panel-radius: 8px; --panel-padding: 12px; }
+    body[data-design-system="material"] { --panel-radius: 4px; --panel-padding: 12px;}
+    body[data-design-system="fluent"] { --panel-radius: 6px; --panel-padding: 12px;}
 
     .kpi-grid { grid-template-columns: 1fr; }
     .filter-buttons .neo-button { flex-basis: 100%; }
@@ -1105,7 +1122,3 @@ body[data-design-system="fluent"] .neo-table th {
 </style>
 </body>
 </html>
-
-[end of templates/detailed_report.html]
-
-[end of templates/detailed_report.html]
