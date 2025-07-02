@@ -264,24 +264,25 @@ export function AdvancedDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 max-w-none xl:max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Расширенная статистика файлов</h1>
           <p className="text-muted-foreground">
             Последнее обновление: {lastUpdate.toLocaleString('ru-RU')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={toggleTheme} variant="outline" size="icon">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 button-group">
+          <Button onClick={toggleTheme} variant="outline" size="icon" className="sm:w-auto">
             {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
           <Dialog open={isDateFilterOpen} onOpenChange={setIsDateFilterOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 sm:w-auto">
                 <Filter className="h-4 w-4" />
-                Фильтр по дате
+                <span className="hidden sm:inline">Фильтр по дате</span>
+                <span className="sm:hidden">Фильтр</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -290,7 +291,7 @@ export function AdvancedDashboard() {
                 <DialogTitle>Фильтр по дате</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Начальная дата</label>
                     <input
@@ -318,26 +319,28 @@ export function AdvancedDashboard() {
                   <Button variant="outline" onClick={() => setQuickFilter('allTime')}>Весь период</Button>
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button onClick={applyDateFilter} className="flex-1">Применить</Button>
-                  <Button variant="outline" onClick={() => setIsDateFilterOpen(false)}>Отмена</Button>
+                  <Button variant="outline" onClick={() => setIsDateFilterOpen(false)} className="flex-1 sm:flex-none">Отмена</Button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
-          <Button onClick={() => fetchData(dateFilter.startDate, dateFilter.endDate)} disabled={loading} className="gap-2">
+          <Button onClick={() => fetchData(dateFilter.startDate, dateFilter.endDate)} disabled={loading} className="gap-2 sm:w-auto">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Обновить
+            <span className="hidden sm:inline">Обновить</span>
+            <span className="sm:hidden">↻</span>
           </Button>
-          <Button onClick={exportToExcel} variant="outline" className="gap-2">
+          <Button onClick={exportToExcel} variant="outline" className="gap-2 sm:w-auto">
             <Download className="h-4 w-4" />
-            Excel
+            <span className="hidden sm:inline">Excel</span>
+            <span className="sm:hidden">↓</span>
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {statCards.map((stat, index) => {
           const Icon = stat.icon
           return (
@@ -364,27 +367,34 @@ export function AdvancedDashboard() {
             Динамика загрузок
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <LineChart data={data?.dailyData || []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line 
-                type="monotone" 
-                dataKey="files" 
-                stroke="var(--color-files)" 
-                strokeWidth={3}
-                dot={{ fill: 'var(--color-files)', strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ChartContainer>
+        <CardContent className="p-4">
+          <div className="w-full h-[400px]">
+            <ChartContainer config={chartConfig} className="w-full h-full">
+              <LineChart data={data?.dailyData || []} width="100%" height="100%">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  fontSize={12}
+                  tick={{ fontSize: 12 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis fontSize={12} tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="files" 
+                  stroke="var(--color-files)" 
+                  strokeWidth={3}
+                  dot={{ fill: 'var(--color-files)', strokeWidth: 2, r: 4 }}
+                />
+              </LineChart>
+            </ChartContainer>
+          </div>
         </CardContent>
       </Card>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Hourly Distribution */}
         <Card>
           <CardHeader>
@@ -393,52 +403,59 @@ export function AdvancedDashboard() {
               Распределение по часам
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={data?.hourlyData || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="files" fill="var(--color-files)" radius={4} />
-              </BarChart>
-            </ChartContainer>
+          <CardContent className="p-4">
+            <div className="w-full h-[300px]">
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <BarChart data={data?.hourlyData || []} width="100%" height="100%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="hour" 
+                    fontSize={10}
+                    tick={{ fontSize: 10 }}
+                    interval={0}
+                  />
+                  <YAxis fontSize={10} tick={{ fontSize: 10 }} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="files" fill="var(--color-files)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Top Users */}
+        {/* Day of Week Distribution */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Топ пользователей
+              <Calendar className="h-5 w-5" />
+              Распределение по дням недели
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <PieChart>
-                <Pie
-                  data={data?.topUsers || []}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  dataKey="count"
-                  nameKey="name"
-                >
-                  {data?.topUsers.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ChartContainer>
+          <CardContent className="p-4">
+            <div className="w-full h-[300px]">
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <BarChart data={data?.summary.weekData.map((count, index) => ({
+                  day: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][index],
+                  files: count
+                })) || []} width="100%" height="100%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="day" 
+                    fontSize={12}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis fontSize={10} tick={{ fontSize: 10 }} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="files" fill="var(--color-users)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Data Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Last 7 Days */}
         <Card>
           <CardHeader>
@@ -447,15 +464,16 @@ export function AdvancedDashboard() {
               Последние 7 дней
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Файлы</TableHead>
-                  <TableHead>Пользователи</TableHead>
-                </TableRow>
-              </TableHeader>
+          <CardContent className="p-0 sm:p-6">
+            <div className="table-container">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>Файлы</TableHead>
+                    <TableHead>Пользователи</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {data?.last7Days?.map(([date, files, users], index) => (
                   <TableRow key={index}>
@@ -478,7 +496,8 @@ export function AdvancedDashboard() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
@@ -487,29 +506,30 @@ export function AdvancedDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Топ пользователей
+              Топ пользователей ({data?.dateRange.effectiveStart || 'начало'} - {data?.dateRange.effectiveEnd || 'конец'})
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Пользователь</TableHead>
-                  <TableHead>Файлов</TableHead>
-                </TableRow>
-              </TableHeader>
+          <CardContent className="p-0 sm:p-6">
+            <div className="table-container">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Пользователь</TableHead>
+                    <TableHead className="text-right">Файлов</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
-                {data?.topUsers?.map((user, index) => (
+                {data?.topUsers?.slice(0, 10).map((user, index) => (
                   <TableRow key={index}>
                     <TableCell>
                       <button 
                         onClick={() => fetchUserActivity(user.name)}
-                        className="text-blue-600 hover:underline"
+                        className="text-primary hover:underline font-medium"
                       >
                         {user.name}
                       </button>
                     </TableCell>
-                    <TableCell>{user.count}</TableCell>
+                    <TableCell className="text-right font-mono">{user.count}</TableCell>
                   </TableRow>
                 )) || (
                   <TableRow>
@@ -519,72 +539,138 @@ export function AdvancedDashboard() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* User Activity Modal */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="dialog-wide overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Статистика пользователя: {selectedUser}</DialogTitle>
+            <DialogTitle className="text-xl">📊 Статистика пользователя: {selectedUser}</DialogTitle>
           </DialogHeader>
           {userActivity && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <p className="text-lg">Всего файлов: <span className="font-bold text-primary">{userActivity.total_files}</span></p>
+            <div className="space-y-4">
+              {/* Stats Summary */}
+              <div className="flex items-center justify-center gap-8 p-4 bg-muted/50 rounded-lg">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Всего файлов</p>
+                  <p className="text-2xl font-bold text-primary">{userActivity.total_files}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Период</p>
+                  <p className="text-sm font-medium">{dateFilter.startDate || 'начало'} - {dateFilter.endDate || 'конец'}</p>
+                </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Активность по дням</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[200px]">
-                    <ChartContainer config={chartConfig} className="h-full">
-                      <LineChart data={userActivity.daily_activity.map(([date, count]) => ({ date, count }))}>
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <Line dataKey="count" stroke="var(--color-activity)" />
+              {/* Main Daily Chart - Full Width */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <TrendingUp className="h-5 w-5" />
+                    Динамика активности по дням
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="w-full h-[250px]">
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                      <LineChart 
+                        data={userActivity.daily_activity.map(([date, count]) => ({ 
+                          date: new Date(date).toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' }), 
+                          files: count 
+                        }))} 
+                        width="100%" 
+                        height="100%"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="date" 
+                          fontSize={10}
+                          tick={{ fontSize: 10 }}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis fontSize={10} tick={{ fontSize: 10 }} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line 
+                          dataKey="files" 
+                          stroke="var(--color-files)" 
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--color-files)', strokeWidth: 2, r: 4 }}
+                        />
                       </LineChart>
                     </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Two Charts Side by Side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Clock className="h-4 w-4" />
+                      Распределение по часам
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3">
+                    <div className="w-full h-[220px]">
+                      <ChartContainer config={chartConfig} className="w-full h-full">
+                        <BarChart 
+                          data={userActivity.hourly_distribution.map((count, hour) => ({ 
+                            hour: `${hour.toString().padStart(2, '0')}:00`, 
+                            files: count 
+                          }))} 
+                          width="100%" 
+                          height="100%"
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="hour" 
+                            fontSize={8}
+                            tick={{ fontSize: 8 }}
+                            interval={0}
+                          />
+                          <YAxis fontSize={8} tick={{ fontSize: 8 }} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="files" fill="var(--color-files)" radius={4} />
+                        </BarChart>
+                      </ChartContainer>
+                    </div>
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Активность по часам</CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Calendar className="h-4 w-4" />
+                      По дням недели
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-[200px]">
-                    <ChartContainer config={chartConfig} className="h-full">
-                      <BarChart data={userActivity.hourly_distribution.map((count, hour) => ({ hour: `${hour}:00`, count }))}>
-                        <XAxis dataKey="hour" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <Bar dataKey="count" fill="var(--color-activity)" />
-                      </BarChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">По дням недели</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[200px]">
-                    <ChartContainer config={chartConfig} className="h-full">
-                      <BarChart data={userActivity.day_of_week_distribution.map((count, index) => ({ 
-                        day: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][index], 
-                        count 
-                      }))}>
-                        <XAxis dataKey="day" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <Bar dataKey="count" fill="var(--color-activity)" />
-                      </BarChart>
-                    </ChartContainer>
+                  <CardContent className="p-3">
+                    <div className="w-full h-[220px]">
+                      <ChartContainer config={chartConfig} className="w-full h-full">
+                        <BarChart 
+                          data={userActivity.day_of_week_distribution.map((count, index) => ({ 
+                            day: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][index], 
+                            files: count 
+                          }))} 
+                          width="100%" 
+                          height="100%"
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="day" 
+                            fontSize={10}
+                            tick={{ fontSize: 10 }}
+                          />
+                          <YAxis fontSize={8} tick={{ fontSize: 8 }} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="files" fill="var(--color-users)" radius={4} />
+                        </BarChart>
+                      </ChartContainer>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -595,21 +681,62 @@ export function AdvancedDashboard() {
 
       {/* Day Detail Modal */}
       <Dialog open={!!dayModalData} onOpenChange={() => setDayModalData(null)}>
-        <DialogContent>
+        <DialogContent className="dialog-medium">
           <DialogHeader>
-            <DialogTitle>Детализация за {dayModalData?.date}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Calendar className="h-5 w-5" />
+              📊 Детализация за {dayModalData?.date}
+            </DialogTitle>
           </DialogHeader>
           {dayModalData && (
-            <div className="h-[400px]">
-              <ChartContainer config={chartConfig} className="h-full">
-                <LineChart data={dayModalData.hourly.map((count, hour) => ({ hour: `${hour}:00`, count }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="hour" />
-                  <YAxis />
-                  <ChartTooltip />
-                  <Line dataKey="count" stroke="var(--color-files)" strokeWidth={2} />
-                </LineChart>
-              </ChartContainer>
+            <div className="space-y-4">
+              {/* Summary */}
+              <div className="text-center p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">Всего файлов за день</p>
+                <p className="text-xl font-bold text-primary">
+                  {dayModalData.hourly.reduce((sum, count) => sum + count, 0)}
+                </p>
+              </div>
+
+              {/* Chart */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Clock className="h-4 w-4" />
+                    Активность по часам
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="w-full h-[350px]">
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                      <LineChart 
+                        data={dayModalData.hourly.map((count, hour) => ({ 
+                          hour: `${hour.toString().padStart(2, '0')}:00`, 
+                          files: count 
+                        }))} 
+                        width="100%" 
+                        height="100%"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="hour" 
+                          fontSize={10}
+                          tick={{ fontSize: 10 }}
+                          interval={0}
+                        />
+                        <YAxis fontSize={10} tick={{ fontSize: 10 }} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line 
+                          dataKey="files" 
+                          stroke="var(--color-files)" 
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--color-files)', strokeWidth: 2, r: 4 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
