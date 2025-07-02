@@ -20,6 +20,17 @@ interface DashboardData {
   hourlyData: Array<{ hour: string; files: number }>
   dailyData: Array<{ date: string; files: number }>
   recentActivity: Array<{ user: string; time: string; action: string }>
+  dateRange: {
+    start?: string
+    end?: string
+    effectiveStart?: string
+    effectiveEnd?: string
+  }
+  summary: {
+    uniqueUsers: number
+    totalInteractions: number
+    weekData: number[]
+  }
 }
 
 const chartConfig = {
@@ -41,43 +52,53 @@ export function Dashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      // Имитация API запроса - заменим на реальный позже
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch('http://localhost:5000/api/dashboard')
       
-      const mockData: DashboardData = {
-        totalFiles: 1247,
-        dailyAvg: 89,
-        topUsers: [
-          { name: "user_001", count: 156 },
-          { name: "user_002", count: 134 },
-          { name: "user_003", count: 98 },
-          { name: "user_004", count: 87 },
-          { name: "user_005", count: 73 }
-        ],
-        hourlyData: Array.from({ length: 24 }, (_, i) => ({
-          hour: `${i}:00`,
-          files: Math.floor(Math.random() * 50) + 10
-        })),
-        dailyData: Array.from({ length: 7 }, (_, i) => ({
-          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('ru-RU', { 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const apiData = await response.json()
+      
+      // Transform API data to match component interface
+      const transformedData: DashboardData = {
+        totalFiles: apiData.totalFiles || 0,
+        dailyAvg: apiData.dailyAvg || 0,
+        topUsers: apiData.topUsers || [],
+        hourlyData: apiData.hourlyData || [],
+        dailyData: (apiData.dailyData || []).map((item: any) => ({
+          date: new Date(item.date).toLocaleDateString('ru-RU', { 
             month: 'short', 
             day: 'numeric' 
           }),
-          files: Math.floor(Math.random() * 100) + 50
+          files: item.files
         })),
+        recentActivity: apiData.recentActivity || [],
+        dateRange: apiData.dateRange || {},
+        summary: apiData.summary || { uniqueUsers: 0, totalInteractions: 0, weekData: [] }
+      }
+      
+      setData(transformedData)
+      setLastUpdate(new Date())
+    } catch (error) {
+      console.error('Ошибка загрузки данных:', error)
+      
+      // Fallback to mock data if API fails
+      const mockData: DashboardData = {
+        totalFiles: 0,
+        dailyAvg: 0,
+        topUsers: [],
+        hourlyData: [],
+        dailyData: [],
         recentActivity: [
-          { user: "user_001", time: "2 мин назад", action: "Создал файл output-001-1234567890.jpg" },
-          { user: "user_002", time: "5 мин назад", action: "Создал файл output-002-1234567880.png" },
-          { user: "user_003", time: "8 мин назад", action: "Создал файл output-003-1234567870.jpg" },
-          { user: "user_001", time: "12 мин назад", action: "Создал файл output-001-1234567860.png" },
-          { user: "user_004", time: "15 мин назад", action: "Создал файл output-004-1234567850.jpg" }
-        ]
+          { user: "API недоступен", time: "сейчас", action: "Используются тестовые данные" }
+        ],
+        dateRange: {},
+        summary: { uniqueUsers: 0, totalInteractions: 0, weekData: [] }
       }
       
       setData(mockData)
       setLastUpdate(new Date())
-    } catch (error) {
-      console.error('Ошибка загрузки данных:', error)
     } finally {
       setLoading(false)
     }
@@ -95,30 +116,22 @@ export function Dashboard() {
     {
       title: "Всего файлов",
       value: data?.totalFiles.toLocaleString() || "0",
-      icon: FileText,
-      change: "+12.5%",
-      trend: "up"
+      icon: FileText
     },
     {
       title: "Среднее в день",
       value: data?.dailyAvg.toString() || "0",
-      icon: Activity,
-      change: "+8.2%", 
-      trend: "up"
+      icon: Activity
     },
     {
-      title: "Активных пользователей",
-      value: data?.topUsers.length.toString() || "0",
-      icon: Users,
-      change: "-2.1%",
-      trend: "down"
+      title: "Уникальных пользователей",
+      value: data?.summary.uniqueUsers.toString() || "0",
+      icon: Users
     },
     {
       title: "Сегодня",
       value: data?.dailyData[data.dailyData.length - 1]?.files.toString() || "0",
-      icon: TrendingUp,
-      change: "+15.3%",
-      trend: "up"
+      icon: TrendingUp
     }
   ]
 
