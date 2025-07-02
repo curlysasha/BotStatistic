@@ -17,7 +17,7 @@ interface DashboardData {
   dailyAvg: number
   topUsers: Array<{ name: string; count: number }>
   hourlyData: Array<{ hour: string; files: number }>
-  dailyData: Array<{ date: string; files: number }>
+  dailyData: Array<{ date: string; files: number; users: number }>
   recentActivity: Array<{ user: string; time: string; action: string }>
   dateRange: {
     start?: string
@@ -99,7 +99,8 @@ export function AdvancedDashboard() {
             month: 'short', 
             day: 'numeric' 
           }),
-          files: item.files
+          files: item.files,
+          users: item.users || 0
         })),
         recentActivity: apiData.recentActivity || [],
         dateRange: apiData.dateRange || {},
@@ -386,6 +387,13 @@ export function AdvancedDashboard() {
                   stroke="var(--color-files)" 
                   strokeWidth={3}
                   dot={{ fill: 'var(--color-files)', strokeWidth: 2, r: 4 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="users" 
+                  stroke="var(--color-users)" 
+                  strokeWidth={3}
+                  dot={{ fill: 'var(--color-users)', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ChartContainer>

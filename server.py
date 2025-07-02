@@ -367,7 +367,11 @@ def api_dashboard():
             for i in range(24)
         ],
         'dailyData': [
-            {'date': date_str, 'files': count}
+            {
+                'date': date_str, 
+                'files': count,
+                'users': next((users for date, users in stats.get('daily_user_counts', []) if date == date_str), 0)
+            }
             for date_str, count in stats['daily'][-30:]  # Last 30 days
         ],
         'recentActivity': generate_recent_activity(),
