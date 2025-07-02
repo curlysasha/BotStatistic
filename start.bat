@@ -1,0 +1,16 @@
+@echo off
+echo 🚀 Запуск BotStatisticMCP серверов...
+
+echo 📊 Запуск Flask API сервера...
+start /min cmd /c "python server.py"
+
+echo ⚛️  Ожидание запуска Flask...
+timeout /t 3 /nobreak > nul
+
+echo ⚛️  Запуск React фронтенда...
+cd frontend
+call npm run dev
+
+echo 🛑 Остановка серверов...
+taskkill /f /im python.exe /t > nul 2>&1
+pause

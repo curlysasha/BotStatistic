@@ -360,7 +360,7 @@ def api_dashboard():
         'dailyAvg': round(stats['average_per_day'], 1) if stats['average_per_day'] else 0,
         'topUsers': [
             {'name': user, 'count': count}
-            for user, count in stats['top_users_in_range'][:5]
+            for user, count in stats['top_users_in_range'][:10]
         ],
         'hourlyData': [
             {'hour': f'{i}:00', 'files': stats['hourly_distribution'][i]}
@@ -368,7 +368,7 @@ def api_dashboard():
         ],
         'dailyData': [
             {'date': date_str, 'files': count}
-            for date_str, count in stats['daily'][-7:]  # Last 7 days
+            for date_str, count in stats['daily'][-30:]  # Last 30 days
         ],
         'recentActivity': generate_recent_activity(),
         'dateRange': {
@@ -381,7 +381,9 @@ def api_dashboard():
             'uniqueUsers': stats['unique_users_count_in_range'],
             'totalInteractions': stats['total_user_interactions_in_range'],
             'weekData': stats['day_of_week_distribution']
-        }
+        },
+        'last7Days': stats.get('last_7_days', []),
+        'last30Days': stats.get('last_30_days', [])
     }
     
     return jsonify(dashboard_data)

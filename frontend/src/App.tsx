@@ -1,9 +1,9 @@
-import { Dashboard } from './components/Dashboard'
+import { AdvancedDashboard } from './components/AdvancedDashboard'
 
 function App() {
   return (
     <div className="min-h-screen bg-background">
-      <Dashboard />
+      <AdvancedDashboard />
     </div>
   )
 }
