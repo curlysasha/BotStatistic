@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { 
   Activity, Users, FileText, TrendingUp, Calendar, Clock, BarChart3, 
@@ -381,6 +381,7 @@ export function AdvancedDashboard() {
                 />
                 <YAxis fontSize={12} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Line 
                   type="monotone" 
                   dataKey="files" 
@@ -639,7 +640,9 @@ export function AdvancedDashboard() {
                           <XAxis 
                             dataKey="hour" 
                             fontSize={8}
-                            tick={{ fontSize: 8 }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
                             interval={0}
                           />
                           <YAxis fontSize={8} tick={{ fontSize: 8 }} />
@@ -731,7 +734,9 @@ export function AdvancedDashboard() {
                         <XAxis 
                           dataKey="hour" 
                           fontSize={10}
-                          tick={{ fontSize: 10 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
                           interval={0}
                         />
                         <YAxis fontSize={10} tick={{ fontSize: 10 }} />
