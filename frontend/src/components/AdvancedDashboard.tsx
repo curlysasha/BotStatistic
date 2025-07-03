@@ -419,7 +419,9 @@ export function AdvancedDashboard() {
                   <XAxis 
                     dataKey="hour" 
                     fontSize={10}
-                    tick={{ fontSize: 10 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
                     interval={0}
                   />
                   <YAxis fontSize={10} tick={{ fontSize: 10 }} />

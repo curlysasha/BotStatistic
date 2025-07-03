@@ -205,7 +205,16 @@ export function Dashboard() {
             <ChartContainer config={chartConfig} className="h-[300px]">
               <BarChart data={data?.hourlyData || []}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
+                <XAxis 
+                  dataKey="hour" 
+                  height={80}
+                  interval={0}
+                  tick={{ 
+                    fontSize: 10,
+                    transform: 'rotate(-45deg)',
+                    textAnchor: 'end' 
+                  }}
+                />
                 <YAxis />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="files" fill="var(--color-files)" radius={4} />
