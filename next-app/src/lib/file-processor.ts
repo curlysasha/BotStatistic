@@ -13,7 +13,7 @@ export interface DashboardData {
   dailyAvg: number
   topUsers: Array<{ name: string; count: number }>
   hourlyData: Array<{ hour: string; files: number }>
-  dailyData: Array<{ date: string; files: number }>
+  dailyData: Array<{ date: string; files: number; users: number }>
   recentActivity: Array<{ user: string; time: string; action: string }>
   dateRange: {
     start?: string
@@ -26,6 +26,7 @@ export interface DashboardData {
     totalInteractions: number
     weekData: number[]
   }
+  last7Days?: Array<[string, number, number]>
 }
 
 export function analyzeFiles(folderPath: string): DashboardData {
@@ -94,23 +95,29 @@ function processStats(stats: FileStats[]): DashboardData {
   // Daily data (last 7 days)
   const now = new Date()
   const dailyData = []
+  const last7Days: Array<[string, number, number]> = []
   
   for (let i = 6; i >= 0; i--) {
     const date = new Date(now)
     date.setDate(date.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
     
-    const dayFiles = stats.filter(stat => 
+    const dayStats = stats.filter(stat => 
       stat.date.toISOString().split('T')[0] === dateStr
-    ).length
+    )
+    const dayFiles = dayStats.length
+    const dayUsers = new Set(dayStats.map(s => s.user)).size
 
     dailyData.push({
       date: date.toLocaleDateString('ru-RU', { 
         month: 'short', 
         day: 'numeric' 
       }),
-      files: dayFiles
+      files: dayFiles,
+      users: dayUsers
     })
+    
+    last7Days.push([dateStr, dayFiles, dayUsers])
   }
 
   // Recent activity
@@ -141,7 +148,8 @@ function processStats(stats: FileStats[]): DashboardData {
       uniqueUsers,
       totalInteractions: totalFiles,
       weekData: dailyData.map(d => d.files)
-    }
+    },
+    last7Days
   }
 }
 

@@ -3,34 +3,47 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts'
-import { Activity, Users, FileText, TrendingUp, RefreshCw, Sun, Moon } from 'lucide-react'
-
-interface StatCard {
-  title: string
-  value: string
-  icon: React.ComponentType<{ className?: string }>
-}
+import { 
+  Activity, Users, FileText, TrendingUp, Calendar, Clock, BarChart3, 
+  RefreshCw, Sun, Moon
+} from 'lucide-react'
 
 interface DashboardData {
   totalFiles: number
   dailyAvg: number
   topUsers: Array<{ name: string; count: number }>
   hourlyData: Array<{ hour: string; files: number }>
-  dailyData: Array<{ date: string; files: number }>
+  dailyData: Array<{ date: string; files: number; users: number }>
   recentActivity: Array<{ user: string; time: string; action: string }>
+  dateRange: {
+    start?: string
+    end?: string
+    effectiveStart?: string
+    effectiveEnd?: string
+  }
   summary: {
     uniqueUsers: number
     totalInteractions: number
     weekData: number[]
   }
+  last7Days?: Array<[string, number, number]>
 }
 
 const chartConfig = {
   files: {
     label: "Файлы",
     color: "hsl(var(--chart-1))",
+  },
+  users: {
+    label: "Пользователи", 
+    color: "hsl(var(--chart-2))",
+  },
+  activity: {
+    label: "Активность",
+    color: "hsl(var(--chart-3))",
   }
 }
 
@@ -50,13 +63,29 @@ export function Dashboard() {
       }
       
       const apiData = await response.json()
-      setData(apiData)
+      
+      const transformedData: DashboardData = {
+        totalFiles: apiData.totalFiles || 0,
+        dailyAvg: apiData.dailyAvg || 0,
+        topUsers: apiData.topUsers || [],
+        hourlyData: apiData.hourlyData || [],
+        dailyData: (apiData.dailyData || []).map((item: any) => ({
+          date: item.date, // Keep original date string from API
+          files: item.files,
+          users: item.users || 0
+        })),
+        recentActivity: apiData.recentActivity || [],
+        dateRange: apiData.dateRange || {},
+        summary: apiData.summary || { uniqueUsers: 0, totalInteractions: 0, weekData: [] },
+        last7Days: apiData.last7Days || []
+      }
+      
+      setData(transformedData)
       setLastUpdate(new Date())
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
       
-      // Fallback to empty data
-      setData({
+      const mockData: DashboardData = {
         totalFiles: 0,
         dailyAvg: 0,
         topUsers: [],
@@ -65,8 +94,11 @@ export function Dashboard() {
         recentActivity: [
           { user: "API недоступен", time: "сейчас", action: "Используются тестовые данные" }
         ],
+        dateRange: {},
         summary: { uniqueUsers: 0, totalInteractions: 0, weekData: [] }
-      })
+      }
+      
+      setData(mockData)
       setLastUpdate(new Date())
     } finally {
       setLoading(false)
@@ -90,32 +122,34 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchData()
-    
-    // Автоматическое обновление каждые 15 минут
     const interval = setInterval(fetchData, 15 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])
 
-  const statCards: StatCard[] = [
+  const statCards = [
     {
       title: "Всего файлов",
       value: data?.totalFiles.toLocaleString() || "0",
-      icon: FileText
+      icon: FileText,
+      color: "text-blue-500"
     },
     {
       title: "Среднее в день",
       value: data?.dailyAvg.toString() || "0",
-      icon: Activity
+      icon: Activity,
+      color: "text-green-500"
     },
     {
       title: "Уникальных пользователей",
       value: data?.summary.uniqueUsers.toString() || "0",
-      icon: Users
+      icon: Users,
+      color: "text-purple-500"
     },
     {
       title: "Сегодня",
       value: data?.dailyData[data.dailyData.length - 1]?.files.toString() || "0",
-      icon: TrendingUp
+      icon: TrendingUp,
+      color: "text-orange-500"
     }
   ]
 
@@ -158,7 +192,7 @@ export function Dashboard() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <Icon className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
@@ -168,44 +202,28 @@ export function Dashboard() {
         })}
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Hourly Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Распределение по часам</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={data?.hourlyData || []}>
+      {/* Main Chart - Динамика загрузок */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Динамика загрузок
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="w-full h-[400px]">
+            <ChartContainer config={chartConfig} className="w-full h-full">
+              <LineChart data={data?.dailyData || []} width="100%" height="100%">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
-                  dataKey="hour" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  interval={0}
+                  dataKey="date" 
+                  fontSize={12}
+                  tick={{ fontSize: 12 }}
+                  interval="preserveStartEnd"
                 />
-                <YAxis />
+                <YAxis fontSize={12} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="files" fill="var(--color-files)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Daily Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Тренд за неделю</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <LineChart data={data?.dailyData || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Line 
                   type="monotone" 
                   dataKey="files" 
@@ -213,37 +231,140 @@ export function Dashboard() {
                   strokeWidth={3}
                   dot={{ fill: 'var(--color-files)', strokeWidth: 2, r: 4 }}
                 />
+                <Line 
+                  type="monotone" 
+                  dataKey="users" 
+                  stroke="var(--color-users)" 
+                  strokeWidth={3}
+                  dot={{ fill: 'var(--color-users)', strokeWidth: 2, r: 4 }}
+                />
               </LineChart>
             </ChartContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+        {/* Hourly Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Распределение по часам
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="w-full h-[300px]">
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <BarChart data={data?.hourlyData || []} width="100%" height="100%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="hour" 
+                    fontSize={10}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis fontSize={10} tick={{ fontSize: 10 }} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="files" fill="var(--color-files)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2">
+        {/* Day of Week Distribution */}
+        <Card>
           <CardHeader>
-            <CardTitle>Последняя активность</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Активность по дням недели
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="w-full h-[300px]">
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <BarChart data={data?.summary.weekData.map((count, index) => ({
+                  day: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][index],
+                  files: count
+                })) || []} width="100%" height="100%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="files" fill="var(--color-activity)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Last 7 Days Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Последние 7 дней
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {data?.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="h-2 w-2 bg-primary rounded-full mt-2"></div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      {activity.user}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {activity.action}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Дата</TableHead>
+                  <TableHead>Файлы</TableHead>
+                  <TableHead>Пользователи</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data?.last7Days?.map(([date, files, users], index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">
+                      {new Date(date).toLocaleDateString('ru-RU')}
+                    </TableCell>
+                    <TableCell>{files}</TableCell>
+                    <TableCell>{users}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Top Users List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Топ пользователей
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Пользователь</TableHead>
+                  <TableHead>Файлы</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data?.topUsers?.map((user, index) => (
+                  <TableRow 
+                    key={index}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => alert(`Детали пользователя: ${user.name}\nФайлов: ${user.count}`)}
+                  >
+                    <TableCell className="font-medium text-blue-600 hover:text-blue-800">
+                      {user.name}
+                    </TableCell>
+                    <TableCell>{user.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

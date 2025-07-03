@@ -1,61 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --background: 43.8462 86.6667% 94.1176%;
+    --foreground: 192.2034 80.8219% 14.3137%;
+    --card: 45.6000 42.3729% 88.4314%;
+    --card-foreground: 192.2034 80.8219% 14.3137%;
+    --popover: 45.6000 42.3729% 88.4314%;
+    --popover-foreground: 192.2034 80.8219% 14.3137%;
+    --primary: 330.9554 64.0816% 51.9608%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 175.4622 58.6207% 39.8039%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 180 6.9307% 60.3922%;
+    --muted-foreground: 192.2034 80.8219% 14.3137%;
+    --accent: 17.5691 80.4444% 44.1176%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 1.0405 71.1934% 52.3529%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 186.3158 8.2969% 55.0980%;
+    --input: 186.3158 8.2969% 55.0980%;
+    --ring: 330.9554 64.0816% 51.9608%;
+    --chart-1: 204.7674 69.3548% 48.6275%;
+    --chart-2: 175.4622 58.6207% 39.8039%;
+    --chart-3: 330.9554 64.0816% 51.9608%;
+    --chart-4: 17.5691 80.4444% 44.1176%;
+    --chart-5: 1.0405 71.1934% 52.3529%;
+    --font-sans: Outfit, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
+    --radius: 0.25rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 192.2222 100.0000% 10.5882%;
+    --foreground: 180 6.9307% 60.3922%;
+    --card: 192.2034 80.8219% 14.3137%;
+    --card-foreground: 180 6.9307% 60.3922%;
+    --popover: 192.2034 80.8219% 14.3137%;
+    --popover-foreground: 180 6.9307% 60.3922%;
+    --primary: 330.9554 64.0816% 51.9608%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 175.4622 58.6207% 39.8039%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 194.4828 14.1463% 40.1961%;
+    --muted-foreground: 180 6.9307% 60.3922%;
+    --accent: 17.5691 80.4444% 44.1176%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 1.0405 71.1934% 52.3529%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 194.4828 14.1463% 40.1961%;
+    --input: 194.4828 14.1463% 40.1961%;
+    --ring: 330.9554 64.0816% 51.9608%;
+    --chart-1: 204.7674 69.3548% 48.6275%;
+    --chart-2: 175.4622 58.6207% 39.8039%;
+    --chart-3: 330.9554 64.0816% 51.9608%;
+    --chart-4: 17.5691 80.4444% 44.1176%;
+    --chart-5: 1.0405 71.1934% 52.3529%;
+    --font-sans: Outfit, sans-serif;
+    --font-mono: Space Mono, monospace;
+    --radius: 0.25rem;
   }
 }
 
@@ -65,5 +73,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 }
