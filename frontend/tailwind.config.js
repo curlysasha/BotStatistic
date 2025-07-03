@@ -18,9 +18,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Oxanium', 'sans-serif'],
-        serif: ['Merriweather', 'serif'],
-        mono: ['Fira Code', 'monospace'],
+        sans: ['Outfit', 'sans-serif'],
+        serif: ['Georgia', 'serif'],
+        mono: ['Space Mono', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
