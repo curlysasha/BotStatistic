@@ -344,4 +344,226 @@ npm install clsx tailwind-merge lucide-react recharts class-variance-authority @
 npx tailwindcss init
 ```
 
+## 🎨 Установка кастомных тем для shadcn/ui
+
+### 📦 Способы установки тем
+
+#### 1. Автоматическая установка (рекомендуется)
+```bash
+# Установка темы из внешнего источника
+npx shadcn@latest add https://tweakcn.com/r/themes/solar-dusk.json
+
+# При появлении предупреждения нажать 'y' для подтверждения
+# "You are about to install a new style. Existing CSS variables and components will be overwritten. Continue?"
+```
+
+#### 2. Ручная установка CSS переменных
+Если автоматическая установка не работает, можно вручную заменить переменные в `src/index.css`:
+
+```css
+:root {
+  --background: 40.0000 60.0000% 98.0392%;
+  --foreground: 20.8696 18.4000% 24.5098%;
+  --primary: 25.9649 90.4762% 37.0588%;
+  /* ... остальные переменные */
+}
+
+.dark {
+  --background: 24 9.8039% 10%;
+  --foreground: 60 4.7619% 95.8824%;
+  --primary: 24.5815 94.9791% 53.1373%;
+  /* ... остальные переменные */
+}
+```
+
+### ⚠️ Проблемы с применением тем
+
+#### Проблема 1: Цвета не применяются
+**Причина**: Несовместимость форматов цветов (oklch vs hsl)
+
+**Решение**:
+1. Проверить формат в `tailwind.config.js`:
+```javascript
+colors: {
+  background: "hsl(var(--background))", // ✅ Правильно
+  // НЕ oklch(var(--background))         // ❌ Неправильно
+}
+```
+
+2. Убедиться что CSS переменные в формате HSL:
+```css
+:root {
+  --background: 40 60% 98%; /* ✅ HSL формат */
+  /* НЕ oklch(0.98 0.006 84); */ /* ❌ OKLCH формат */
+}
+```
+
+#### Проблема 2: Шрифты не загружаются
+**Решение**: Добавить импорт Google Fonts в `src/index.css`:
+```css
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@200;300;400;500;600;700;800&display=swap');
+
+/* Затем обновить tailwind.config.js */
+fontFamily: {
+  sans: ['Oxanium', 'sans-serif'],
+}
+```
+
+#### Проблема 3: Тема применяется частично
+**Решение**: Перезапустить dev сервер для пересборки CSS:
+```bash
+# Остановить сервер (Ctrl+C)
+# Или принудительно убить процесс
+pkill -f vite
+
+# Запустить заново
+npm run dev
+```
+
+### 🎯 Правильная последовательность установки
+
+1. **Установка темы**:
+```bash
+npx shadcn@latest add https://tweakcn.com/r/themes/THEME_NAME.json
+```
+
+2. **Проверка формата цветов** в `tailwind.config.js`:
+```javascript
+colors: {
+  background: "hsl(var(--background))", // Должно быть hsl()
+}
+```
+
+3. **Добавление шрифтов** в `src/index.css`:
+```css
+@import url('https://fonts.googleapis.com/...');
+```
+
+4. **Обновление Tailwind конфига** для шрифтов:
+```javascript
+fontFamily: {
+  sans: ['ThemeFontName', 'sans-serif'],
+}
+```
+
+5. **Перезапуск сервера**:
+```bash
+pkill -f vite && npm run dev
+```
+
+## 📊 Решение проблем с графиками Recharts
+
+### ❌ Проблема: Наложение меток времени на оси X
+
+#### Частые проблемы:
+- Много часовых меток (00:00, 01:00, 02:00...) накладываются друг на друга
+- Текст нечитаемый на мобильных устройствах
+- Метки выходят за границы графика
+
+#### ✅ Решения для поворота меток:
+
+**1. Поворот на -45 градусов (рекомендуется)**:
+```jsx
+<XAxis 
+  dataKey="hour" 
+  angle={-45}           // Поворот на -45°
+  textAnchor="end"      // Выравнивание текста
+  height={80}           // Увеличенная высота для наклонных меток
+  interval={0}          // Показать все метки
+/>
+```
+
+**2. Вертикальные метки (-90 градусов)**:
+```jsx
+<XAxis 
+  dataKey="hour" 
+  angle={-90}           // Вертикальный поворот
+  textAnchor="end"      
+  height={100}          // Еще больше высоты для вертикальных меток
+  interval={0}
+/>
+```
+
+**3. Показ через одну метку**:
+```jsx
+<XAxis 
+  dataKey="hour" 
+  interval={1}          // Показать каждую вторую метку
+  tick={{ fontSize: 11 }}
+/>
+```
+
+**4. Сокращение текста меток**:
+```jsx
+<XAxis 
+  dataKey="hour" 
+  tickFormatter={(value) => value.slice(0, 5)} // "12:00" вместо "12:00:00"
+  angle={-45}
+  textAnchor="end"
+/>
+```
+
+### ⚠️ Что НЕ работает с Recharts:
+
+#### ❌ Неправильные способы:
+```jsx
+// НЕ РАБОТАЕТ - неправильный синтаксис
+<XAxis tick={{ transform: 'rotate(-45deg)' }} />
+
+// НЕ РАБОТАЕТ - CSS transform в tick объекте
+<XAxis tick={{ angle: -45, transform: 'rotate(-45deg)' }} />
+
+// НЕ РАБОТАЕТ - CSS классы
+<XAxis className="rotate-45" />
+```
+
+#### ✅ Правильный синтаксис:
+```jsx
+// РАБОТАЕТ - прямые свойства XAxis
+<XAxis 
+  angle={-45}
+  textAnchor="end"
+  height={80}
+  interval={0}
+/>
+```
+
+### 📱 Адаптивные графики
+
+Для разных размеров экрана:
+```jsx
+// Мобильные устройства
+<XAxis 
+  dataKey="hour" 
+  angle={-90}              // Вертикально на мобильных
+  textAnchor="end"
+  height={120}
+  tick={{ fontSize: 8 }}   // Мелкий шрифт
+  interval={1}             // Через одну метку
+/>
+
+// Десктоп
+<XAxis 
+  dataKey="hour" 
+  angle={-45}              // -45° на десктопе
+  textAnchor="end"
+  height={80}
+  tick={{ fontSize: 12 }}
+  interval={0}             // Все метки
+/>
+```
+
+## 🎉 Проверенные решения
+
+### Источники тем:
+- **TweakCN**: https://tweakcn.com/themes
+- **shadcn themes**: https://github.com/shadcn-ui/themes
+- **ui.shadcn.com**: Официальные темы
+
+### Тестирование:
+1. Проверить в светлой теме
+2. Проверить в темной теме  
+3. Проверить на мобильных устройствах
+4. Проверить все графики на читаемость меток
+
 Этот guide проверен на WSL с Node.js 18.19.1 и гарантированно работает! 🎉
